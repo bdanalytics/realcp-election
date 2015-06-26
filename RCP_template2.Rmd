@@ -220,7 +220,14 @@ glb_assign_vars <- names(glb_assign_pairs_lst)
 
 # Derived features
 glb_derive_lst <- NULL;
-# glb_derive_lst[["Week.bgn"]] <- list(
+glb_derive_lst[["Rasmussen.sign"]] <- list(
+    mapfn=function(Rasmussen) { return(ifelse(sign(Rasmussen) >= 0, 1, 0)) }
+    , args=c("Rasmussen"))
+
+glb_derive_lst[["PropR.fctr"]] <- list(
+    mapfn=function(PropR) { return(as.factor(ifelse(PropR >= 0.5, "Y", "N"))) }
+    , args=c("PropR"))
+
 #     mapfn=function(Week) { return(substr(Week, 1, 10)) }
 #     , args=c("Week"))
 
@@ -266,10 +273,10 @@ glb_derive_lst <- NULL;
 #                                                    glb_allobs_df[, txt_var]))
 #summary(glb_allobs_df[ ,grep("P.on.this.day", names(glb_allobs_df), value=TRUE)])
 
-# args_lst <- NULL; for (arg in glb_derive_lst[["Week.bgn"]]$args) args_lst[[arg]] <- glb_allobs_df[, arg]; do.call(mapfn, args_lst)
-
 # glb_derive_lst[["<var1>"]] <- glb_derive_lst[["<var2>"]]
 glb_derive_vars <- names(glb_derive_lst)
+# tst <- "PropR.fctr"; args_lst <- NULL; for (arg in glb_derive_lst[[tst]]$args) args_lst[[arg]] <- glb_allobs_df[, arg]; print(head(args_lst[[arg]])); print(head(drv_vals <- do.call(glb_derive_lst[[tst]]$mapfn, args_lst))); 
+# print(which_ix <- which(args_lst[[arg]] == 0.75)); print(drv_vals[which_ix]); 
 
 glb_date_vars <- NULL # or c("<date_var>")
 glb_date_fmts <- list(); #glb_date_fmts[["<date_var>"]] <- "%m/%e/%y"
@@ -301,7 +308,7 @@ glb_sprs_thresholds <- NULL # or c(0.988, 0.970, 0.970) # Generates 29, 22, 22 t
 names(glb_sprs_thresholds) <- glb_txt_vars
 
 # User-specified exclusions  
-glb_exclude_vars_as_features <- c("Rasmussen", "SurveyUSA", "State") 
+glb_exclude_vars_as_features <- c("State") 
 if (glb_rsp_var_raw != glb_rsp_var)
     glb_exclude_vars_as_features <- union(glb_exclude_vars_as_features, 
                                             glb_rsp_var_raw)
@@ -327,7 +334,7 @@ if (glb_is_regression)
         glb_models_method_vctr <- c("rpart", "rf")
 
 # Baseline prediction model feature(s)
-glb_Baseline_mdl_var <- NULL # or c("<col_name>")
+glb_Baseline_mdl_var <- c("PropR.fctr")
 
 glb_model_metric_terms <- NULL # or matrix(c(
 #                               0,1,2,3,4,
@@ -1716,6 +1723,9 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "cluster.data", major.inc=TRUE)
 ```{r manage.missing.data, cache=FALSE}
 glb_chunks_df <- myadd_chunk(glb_chunks_df, "manage.missing.data", major.inc=FALSE)
 
+# If mice crashes with error: Error in get(as.character(FUN), mode = "function", envir = envir) : object 'State' of mode 'function' was not found
+#   consider excluding 'State' as a feature
+
 # print(sapply(names(glb_trnobs_df), function(col) sum(is.na(glb_trnobs_df[, col]))))
 # print(sapply(names(glb_newobs_df), function(col) sum(is.na(glb_newobs_df[, col]))))
 # glb_trnobs_df <- na.omit(glb_trnobs_df)
@@ -1737,14 +1747,24 @@ glb_impute_missing_data <- function() {
     out_impent_df <- complete(mice(inp_impent_df))
     print(summary(out_impent_df))
     
-    # complete(mice()) changes attributes of factors even though values don't change
     ret_vars <- sapply(names(out_impent_df), 
-                       function(col) ifelse(!identical(out_impent_df[, col], inp_impent_df[, col]), 
+                       function(col) ifelse(!identical(out_impent_df[, col],
+                                                       inp_impent_df[, col]), 
                                             col, ""))
     ret_vars <- ret_vars[ret_vars != ""]
+    
+    # complete(mice()) changes attributes of factors even though values don't change
+    for (col in ret_vars) {
+        if (inherits(out_impent_df[, col], "factor")) {
+            if (identical(as.numeric(out_impent_df[, col]), 
+                          as.numeric(inp_impent_df[, col])))
+                ret_vars <- setdiff(ret_vars, col)
+        }
+    }
     return(out_impent_df[, ret_vars])
 }
 
+#stop(here")
 if (glb_impute_na_data && 
     (length(myfind_numerics_missing(glb_allobs_df)) > 0) &&
     (ncol(nonna_df <- glb_impute_missing_data()) > 0)) {
@@ -1845,6 +1865,8 @@ if (glb_cluster) {
                                       cluster_vars)
 }
 
+#stop(here") # sav_allobs_df <- glb_allobs_df
+glb_allobs_df[(glb_allobs_df$PropR == 0.75) & (glb_allobs_df$State == "Hawaii"), "PropR.fctr"] <- "N"
 # Re-partition
 glb_trnobs_df <- subset(glb_allobs_df, .src == "Train")
 glb_newobs_df <- subset(glb_allobs_df, .src == "Test")
@@ -2033,20 +2055,22 @@ max_cor_y_x_vars <- orderBy(~ -cor.y.abs,
 # }
 if (!is.null(glb_Baseline_mdl_var)) {
     if ((max_cor_y_x_vars[1] != glb_Baseline_mdl_var) & 
-        (glb_feats_df[max_cor_y_x_vars[1], "cor.y.abs"] > 
-         glb_feats_df[glb_Baseline_mdl_var, "cor.y.abs"]))
-        stop(max_cor_y_x_vars[1], " has a lower correlation with ", glb_rsp_var, 
+        (glb_feats_df[glb_feats_df$id == max_cor_y_x_vars[1], "cor.y.abs"] > 
+         glb_feats_df[glb_feats_df$id == glb_Baseline_mdl_var, "cor.y.abs"]))
+        stop(max_cor_y_x_vars[1], " has a higher correlation with ", glb_rsp_var, 
              " than the Baseline var: ", glb_Baseline_mdl_var)
 }
 
 glb_model_type <- ifelse(glb_is_regression, "regression", "classification")
     
 # Baseline
+#stop(here")
 if (!is.null(glb_Baseline_mdl_var)) 
-    ret_lst <- myfit_mdl_fn(model_id="Baseline", model_method="mybaseln_classfr",
-                            indep_vars_vctr=glb_Baseline_mdl_var,
-                            rsp_var=glb_rsp_var, rsp_var_out=glb_rsp_var_out,
-                            fit_df=glb_fitobs_df, OOB_df=glb_OOBobs_df)
+    ret_lst <- myfit_mdl(model_id="Baseline", 
+                         model_method="mybaseln_classfr",
+                        indep_vars_vctr=glb_Baseline_mdl_var,
+                        rsp_var=glb_rsp_var, rsp_var_out=glb_rsp_var_out,
+                        fit_df=glb_fitobs_df, OOB_df=glb_OOBobs_df)
 
 # Most Frequent Outcome "MFO" model: mean(y) for regression
 #   Not using caret's nullModel since model stats not avl

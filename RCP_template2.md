@@ -2,7 +2,7 @@
 bdanalytics  
 
 **  **    
-**Date: (Thu) Jun 25, 2015**    
+**Date: (Fri) Jun 26, 2015**    
 
 # Introduction:  
 
@@ -223,7 +223,14 @@ glb_assign_vars <- names(glb_assign_pairs_lst)
 
 # Derived features
 glb_derive_lst <- NULL;
-# glb_derive_lst[["Week.bgn"]] <- list(
+glb_derive_lst[["Rasmussen.sign"]] <- list(
+    mapfn=function(Rasmussen) { return(ifelse(sign(Rasmussen) >= 0, 1, 0)) }
+    , args=c("Rasmussen"))
+
+glb_derive_lst[["PropR.fctr"]] <- list(
+    mapfn=function(PropR) { return(as.factor(ifelse(PropR >= 0.5, "Y", "N"))) }
+    , args=c("PropR"))
+
 #     mapfn=function(Week) { return(substr(Week, 1, 10)) }
 #     , args=c("Week"))
 
@@ -269,10 +276,10 @@ glb_derive_lst <- NULL;
 #                                                    glb_allobs_df[, txt_var]))
 #summary(glb_allobs_df[ ,grep("P.on.this.day", names(glb_allobs_df), value=TRUE)])
 
-# args_lst <- NULL; for (arg in glb_derive_lst[["Week.bgn"]]$args) args_lst[[arg]] <- glb_allobs_df[, arg]; do.call(mapfn, args_lst)
-
 # glb_derive_lst[["<var1>"]] <- glb_derive_lst[["<var2>"]]
 glb_derive_vars <- names(glb_derive_lst)
+# tst <- "PropR.fctr"; args_lst <- NULL; for (arg in glb_derive_lst[[tst]]$args) args_lst[[arg]] <- glb_allobs_df[, arg]; print(head(args_lst[[arg]])); print(head(drv_vals <- do.call(glb_derive_lst[[tst]]$mapfn, args_lst))); 
+# print(which_ix <- which(args_lst[[arg]] == 0.75)); print(drv_vals[which_ix]); 
 
 glb_date_vars <- NULL # or c("<date_var>")
 glb_date_fmts <- list(); #glb_date_fmts[["<date_var>"]] <- "%m/%e/%y"
@@ -304,7 +311,7 @@ glb_sprs_thresholds <- NULL # or c(0.988, 0.970, 0.970) # Generates 29, 22, 22 t
 names(glb_sprs_thresholds) <- glb_txt_vars
 
 # User-specified exclusions  
-glb_exclude_vars_as_features <- c("Rasmussen", "SurveyUSA", "State") 
+glb_exclude_vars_as_features <- c("State") 
 if (glb_rsp_var_raw != glb_rsp_var)
     glb_exclude_vars_as_features <- union(glb_exclude_vars_as_features, 
                                             glb_rsp_var_raw)
@@ -330,7 +337,7 @@ if (glb_is_regression)
         glb_models_method_vctr <- c("rpart", "rf")
 
 # Baseline prediction model feature(s)
-glb_Baseline_mdl_var <- NULL # or c("<col_name>")
+glb_Baseline_mdl_var <- c("PropR.fctr")
 
 glb_model_metric_terms <- NULL # or matrix(c(
 #                               0,1,2,3,4,
@@ -421,7 +428,7 @@ glb_chunks_df <- myadd_chunk(NULL, "import.data")
 
 ```
 ##         label step_major step_minor    bgn end elapsed
-## 1 import.data          1          0 11.098  NA      NA
+## 1 import.data          1          0 19.242  NA      NA
 ```
 
 ## Step `1.0: import data`
@@ -647,9 +654,9 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "inspect.data", major.inc=TRUE)
 ```
 
 ```
-##          label step_major step_minor    bgn    end elapsed
-## 1  import.data          1          0 11.098 11.434   0.337
-## 2 inspect.data          2          0 11.435     NA      NA
+##          label step_major step_minor    bgn   end elapsed
+## 1  import.data          1          0 19.242 19.68   0.438
+## 2 inspect.data          2          0 19.680    NA      NA
 ```
 
 ## Step `2.0: inspect data`
@@ -868,22 +875,50 @@ dsp_numeric_feats_dstrb(feats_vctr=setdiff(names(glb_allobs_df),
 ![](RCP_template2_files/figure-html/inspect.data-3.png) 
 
 ```
-## [1] "feat: DiffCount"
+## [1] "feat: Rasmussen"
+```
+
+```
+## Warning: Removed 46 rows containing non-finite values (stat_boxplot).
+```
+
+```
+## Warning: Removed 46 rows containing missing values (stat_summary).
 ```
 
 ![](RCP_template2_files/figure-html/inspect.data-4.png) 
 
 ```
-## [1] "feat: PropR"
+## [1] "feat: SurveyUSA"
+```
+
+```
+## Warning: Removed 71 rows containing non-finite values (stat_boxplot).
+```
+
+```
+## Warning: Removed 71 rows containing missing values (stat_summary).
 ```
 
 ![](RCP_template2_files/figure-html/inspect.data-5.png) 
 
 ```
-## [1] "feat: .rnorm"
+## [1] "feat: DiffCount"
 ```
 
 ![](RCP_template2_files/figure-html/inspect.data-6.png) 
+
+```
+## [1] "feat: PropR"
+```
+
+![](RCP_template2_files/figure-html/inspect.data-7.png) 
+
+```
+## [1] "feat: .rnorm"
+```
+
+![](RCP_template2_files/figure-html/inspect.data-8.png) 
 
 ```r
 #   Convert factors to dummy variables
@@ -948,8 +983,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "scrub.data", major.inc=FALSE)
 
 ```
 ##          label step_major step_minor    bgn    end elapsed
-## 2 inspect.data          2          0 11.435 16.932   5.498
-## 3   scrub.data          2          1 16.933     NA      NA
+## 2 inspect.data          2          0 19.680 30.188  10.508
+## 3   scrub.data          2          1 30.189     NA      NA
 ```
 
 ### Step `2.1: scrub data`
@@ -1256,8 +1291,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "transform.data", major.inc=FALSE)
 
 ```
 ##            label step_major step_minor    bgn    end elapsed
-## 3     scrub.data          2          1 16.933 18.072   1.139
-## 4 transform.data          2          2 18.072     NA      NA
+## 3     scrub.data          2          1 30.189 32.104   1.915
+## 4 transform.data          2          2 32.105     NA      NA
 ```
 
 ```r
@@ -1317,6 +1352,11 @@ for (new_feat in glb_derive_vars) {
 }
 ```
 
+```
+## [1] "Creating new feature: Rasmussen.sign..."
+## [1] "Creating new feature: PropR.fctr..."
+```
+
 ## Step `2.2: transform data`
 
 ```r
@@ -1326,8 +1366,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "extract.features", major.inc=TRUE)
 
 ```
 ##              label step_major step_minor    bgn    end elapsed
-## 4   transform.data          2          2 18.072 18.134   0.062
-## 5 extract.features          3          0 18.135     NA      NA
+## 4   transform.data          2          2 32.105 32.172   0.067
+## 5 extract.features          3          0 32.172     NA      NA
 ```
 
 ```r
@@ -1336,7 +1376,7 @@ extract.features_chunk_df <- myadd_chunk(NULL, "extract.features_bgn")
 
 ```
 ##                  label step_major step_minor    bgn end elapsed
-## 1 extract.features_bgn          1          0 18.141  NA      NA
+## 1 extract.features_bgn          1          0 32.179  NA      NA
 ```
 
 ```r
@@ -1484,8 +1524,8 @@ extract.features_chunk_df <- myadd_chunk(extract.features_chunk_df,
 
 ```
 ##                                 label step_major step_minor    bgn    end
-## 1                extract.features_bgn          1          0 18.141 18.155
-## 2 extract.features_factorize.str.vars          2          0 18.156     NA
+## 1                extract.features_bgn          1          0 32.179 32.194
+## 2 extract.features_factorize.str.vars          2          0 32.194     NA
 ##   elapsed
 ## 1   0.015
 ## 2      NA
@@ -2071,10 +2111,10 @@ extract.features_chunk_df <- myadd_chunk(extract.features_chunk_df, "extract.fea
 
 ```
 ##                                 label step_major step_minor    bgn    end
-## 2 extract.features_factorize.str.vars          2          0 18.156 18.173
-## 3                extract.features_end          3          0 18.173     NA
+## 2 extract.features_factorize.str.vars          2          0 32.194 32.213
+## 3                extract.features_end          3          0 32.213     NA
 ##   elapsed
-## 2   0.017
+## 2   0.019
 ## 3      NA
 ```
 
@@ -2084,12 +2124,12 @@ myplt_chunk(extract.features_chunk_df)
 
 ```
 ##                                 label step_major step_minor    bgn    end
-## 2 extract.features_factorize.str.vars          2          0 18.156 18.173
-## 1                extract.features_bgn          1          0 18.141 18.155
+## 2 extract.features_factorize.str.vars          2          0 32.194 32.213
+## 1                extract.features_bgn          1          0 32.179 32.194
 ##   elapsed duration
-## 2   0.017    0.017
-## 1   0.015    0.014
-## [1] "Total Elapsed Time: 18.173 secs"
+## 2   0.019    0.019
+## 1   0.015    0.015
+## [1] "Total Elapsed Time: 32.213 secs"
 ```
 
 ![](RCP_template2_files/figure-html/extract.features-1.png) 
@@ -2121,9 +2161,9 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "cluster.data", major.inc=TRUE)
 ```
 
 ```
-##              label step_major step_minor    bgn    end elapsed
-## 5 extract.features          3          0 18.135 19.458   1.323
-## 6     cluster.data          4          0 19.458     NA      NA
+##              label step_major step_minor    bgn  end elapsed
+## 5 extract.features          3          0 32.172 36.6   4.429
+## 6     cluster.data          4          0 36.601   NA      NA
 ```
 
 ### Step `4.0: cluster data`
@@ -2133,12 +2173,15 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "manage.missing.data", major.inc=FAL
 ```
 
 ```
-##                 label step_major step_minor    bgn    end elapsed
-## 6        cluster.data          4          0 19.458 19.755   0.297
-## 7 manage.missing.data          4          1 19.756     NA      NA
+##                 label step_major step_minor    bgn   end elapsed
+## 6        cluster.data          4          0 36.601 40.35   3.749
+## 7 manage.missing.data          4          1 40.351    NA      NA
 ```
 
 ```r
+# If mice crashes with error: Error in get(as.character(FUN), mode = "function", envir = envir) : object 'State' of mode 'function' was not found
+#   consider excluding 'State' as a feature
+
 # print(sapply(names(glb_trnobs_df), function(col) sum(is.na(glb_trnobs_df[, col]))))
 # print(sapply(names(glb_newobs_df), function(col) sum(is.na(glb_newobs_df[, col]))))
 # glb_trnobs_df <- na.omit(glb_trnobs_df)
@@ -2150,11 +2193,13 @@ mycheck_problem_data(glb_allobs_df)
 
 ```
 ## [1] "numeric data missing in glb_allobs_df: "
-## Rasmussen SurveyUSA 
-##        46        71 
+##      Rasmussen      SurveyUSA Rasmussen.sign 
+##             46             71             46 
 ## [1] "numeric data w/ 0s in glb_allobs_df: "
-##  Rasmussen  SurveyUSA  DiffCount      PropR Republican 
-##          4          4          2         53         71 
+##      Rasmussen      SurveyUSA      DiffCount          PropR     Republican 
+##              4              4              2             53             71 
+## Rasmussen.sign 
+##             45 
 ## [1] "numeric data w/ Infs in glb_allobs_df: "
 ## named integer(0)
 ## [1] "numeric data w/ NaNs in glb_allobs_df: "
@@ -2179,14 +2224,24 @@ glb_impute_missing_data <- function() {
     out_impent_df <- complete(mice(inp_impent_df))
     print(summary(out_impent_df))
     
-    # complete(mice()) changes attributes of factors even though values don't change
     ret_vars <- sapply(names(out_impent_df), 
-                       function(col) ifelse(!identical(out_impent_df[, col], inp_impent_df[, col]), 
+                       function(col) ifelse(!identical(out_impent_df[, col],
+                                                       inp_impent_df[, col]), 
                                             col, ""))
     ret_vars <- ret_vars[ret_vars != ""]
+    
+    # complete(mice()) changes attributes of factors even though values don't change
+    for (col in ret_vars) {
+        if (inherits(out_impent_df[, col], "factor")) {
+            if (identical(as.numeric(out_impent_df[, col]), 
+                          as.numeric(inp_impent_df[, col])))
+                ret_vars <- setdiff(ret_vars, col)
+        }
+    }
     return(out_impent_df[, ret_vars])
 }
 
+#stop(here")
 if (glb_impute_na_data && 
     (length(myfind_numerics_missing(glb_allobs_df)) > 0) &&
     (ncol(nonna_df <- glb_impute_missing_data()) > 0)) {
@@ -2198,8 +2253,75 @@ if (glb_impute_na_data &&
 ```
 
 ```
-## Rasmussen SurveyUSA 
-##        46        71
+##      Rasmussen      SurveyUSA Rasmussen.sign 
+##             46             71             46
+```
+
+```
+## Loading required package: mice
+## Loading required package: Rcpp
+## mice 2.22 2014-06-10
+```
+
+```
+## [1] "Summary before imputation: "
+##       Year        Rasmussen          SurveyUSA          DiffCount      
+##  Min.   :2004   Min.   :-41.0000   Min.   :-33.0000   Min.   :-19.000  
+##  1st Qu.:2004   1st Qu.: -8.0000   1st Qu.:-11.7500   1st Qu.: -6.000  
+##  Median :2008   Median :  1.0000   Median : -2.0000   Median :  1.000  
+##  Mean   :2008   Mean   :  0.0404   Mean   : -0.8243   Mean   : -1.269  
+##  3rd Qu.:2012   3rd Qu.:  8.5000   3rd Qu.:  8.0000   3rd Qu.:  4.000  
+##  Max.   :2012   Max.   : 39.0000   Max.   : 30.0000   Max.   : 11.000  
+##                 NA's   :46         NA's   :71                          
+##      PropR            .rnorm         Rasmussen.sign   PropR.fctr
+##  Min.   :0.0000   Min.   :-2.51287   Min.   :0.0000   N:67      
+##  1st Qu.:0.0000   1st Qu.:-0.49279   1st Qu.:0.0000   Y:78      
+##  Median :0.6250   Median : 0.04153   Median :1.0000             
+##  Mean   :0.5259   Mean   : 0.03759   Mean   :0.5454             
+##  3rd Qu.:1.0000   3rd Qu.: 0.72424   3rd Qu.:1.0000             
+##  Max.   :1.0000   Max.   : 2.59377   Max.   :1.0000             
+##                                      NA's   :46                 
+## 
+##  iter imp variable
+##   1   1  Rasmussen  SurveyUSA  Rasmussen.sign
+##   1   2  Rasmussen  SurveyUSA  Rasmussen.sign
+##   1   3  Rasmussen  SurveyUSA  Rasmussen.sign
+##   1   4  Rasmussen  SurveyUSA  Rasmussen.sign
+##   1   5  Rasmussen  SurveyUSA  Rasmussen.sign
+##   2   1  Rasmussen  SurveyUSA  Rasmussen.sign
+##   2   2  Rasmussen  SurveyUSA  Rasmussen.sign
+##   2   3  Rasmussen  SurveyUSA  Rasmussen.sign
+##   2   4  Rasmussen  SurveyUSA  Rasmussen.sign
+##   2   5  Rasmussen  SurveyUSA  Rasmussen.sign
+##   3   1  Rasmussen  SurveyUSA  Rasmussen.sign
+##   3   2  Rasmussen  SurveyUSA  Rasmussen.sign
+##   3   3  Rasmussen  SurveyUSA  Rasmussen.sign
+##   3   4  Rasmussen  SurveyUSA  Rasmussen.sign
+##   3   5  Rasmussen  SurveyUSA  Rasmussen.sign
+##   4   1  Rasmussen  SurveyUSA  Rasmussen.sign
+##   4   2  Rasmussen  SurveyUSA  Rasmussen.sign
+##   4   3  Rasmussen  SurveyUSA  Rasmussen.sign
+##   4   4  Rasmussen  SurveyUSA  Rasmussen.sign
+##   4   5  Rasmussen  SurveyUSA  Rasmussen.sign
+##   5   1  Rasmussen  SurveyUSA  Rasmussen.sign
+##   5   2  Rasmussen  SurveyUSA  Rasmussen.sign
+##   5   3  Rasmussen  SurveyUSA  Rasmussen.sign
+##   5   4  Rasmussen  SurveyUSA  Rasmussen.sign
+##   5   5  Rasmussen  SurveyUSA  Rasmussen.sign
+##       Year        Rasmussen         SurveyUSA         DiffCount      
+##  Min.   :2004   Min.   :-41.000   Min.   :-33.000   Min.   :-19.000  
+##  1st Qu.:2004   1st Qu.:-10.000   1st Qu.:-11.000   1st Qu.: -6.000  
+##  Median :2008   Median :  3.000   Median :  1.000   Median :  1.000  
+##  Mean   :2008   Mean   :  1.538   Mean   :  2.331   Mean   : -1.269  
+##  3rd Qu.:2012   3rd Qu.: 12.000   3rd Qu.: 19.000   3rd Qu.:  4.000  
+##  Max.   :2012   Max.   : 39.000   Max.   : 30.000   Max.   : 11.000  
+##      PropR            .rnorm         Rasmussen.sign   PropR.fctr
+##  Min.   :0.0000   Min.   :-2.51287   Min.   :0.0000   N:67      
+##  1st Qu.:0.0000   1st Qu.:-0.49279   1st Qu.:0.0000   Y:78      
+##  Median :0.6250   Median : 0.04153   Median :1.0000             
+##  Mean   :0.5259   Mean   : 0.03759   Mean   :0.5862             
+##  3rd Qu.:1.0000   3rd Qu.: 0.72424   3rd Qu.:1.0000             
+##  Max.   :1.0000   Max.   : 2.59377   Max.   :1.0000
 ```
 
 ```r
@@ -2208,11 +2330,15 @@ mycheck_problem_data(glb_allobs_df, terminate = TRUE)
 
 ```
 ## [1] "numeric data missing in glb_allobs_df: "
-## Rasmussen SurveyUSA 
-##        46        71 
+##      Rasmussen      SurveyUSA Rasmussen.sign 
+##             46             71             46 
 ## [1] "numeric data w/ 0s in glb_allobs_df: "
-##  Rasmussen  SurveyUSA  DiffCount      PropR Republican 
-##          4          4          2         53         71 
+##            Rasmussen            SurveyUSA            DiffCount 
+##                    4                    4                    2 
+##                PropR           Republican       Rasmussen.sign 
+##                   53                   71                   45 
+##      Rasmussen.nonNA      SurveyUSA.nonNA Rasmussen.sign.nonNA 
+##                    4                    5                   60 
 ## [1] "numeric data w/ Infs in glb_allobs_df: "
 ## named integer(0)
 ## [1] "numeric data w/ NaNs in glb_allobs_df: "
@@ -2311,6 +2437,8 @@ if (glb_cluster) {
                                       cluster_vars)
 }
 
+#stop(here") # sav_allobs_df <- glb_allobs_df
+glb_allobs_df[(glb_allobs_df$PropR == 0.75) & (glb_allobs_df$State == "Hawaii"), "PropR.fctr"] <- "N"
 # Re-partition
 glb_trnobs_df <- subset(glb_allobs_df, .src == "Train")
 glb_newobs_df <- subset(glb_allobs_df, .src == "Test")
@@ -2320,8 +2448,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "select.features", major.inc=TRUE)
 
 ```
 ##                 label step_major step_minor    bgn    end elapsed
-## 7 manage.missing.data          4          1 19.756 19.813   0.058
-## 8     select.features          5          0 19.814     NA      NA
+## 7 manage.missing.data          4          1 40.351 45.766   5.415
+## 8     select.features          5          0 45.766     NA      NA
 ```
 
 ## Step `5.0: select features`
@@ -2333,14 +2461,32 @@ print(glb_feats_df <- myselect_features(entity_df=glb_trnobs_df,
 ```
 
 ```
-##                    id        cor.y exclude.as.feat   cor.y.abs
-## Republican Republican  1.000000000               1 1.000000000
-## PropR           PropR  0.948420430               0 0.948420430
-## SurveyUSA   SurveyUSA  0.817495324               1 0.817495324
-## DiffCount   DiffCount  0.809277704               0 0.809277704
-## Rasmussen   Rasmussen  0.767707851               1 0.767707851
-## Year             Year -0.180324877               0 0.180324877
-## .rnorm         .rnorm  0.001708499               0 0.001708499
+##                                        id        cor.y exclude.as.feat
+## Republican                     Republican  1.000000000               1
+## PropR.fctr                     PropR.fctr  0.960536601               0
+## PropR                               PropR  0.948420430               0
+## Rasmussen.sign.nonNA Rasmussen.sign.nonNA  0.903648754               0
+## Rasmussen.sign             Rasmussen.sign  0.901091456               1
+## SurveyUSA.nonNA           SurveyUSA.nonNA  0.828157357               0
+## SurveyUSA                       SurveyUSA  0.817495324               1
+## DiffCount                       DiffCount  0.809277704               0
+## Rasmussen.nonNA           Rasmussen.nonNA  0.787939323               0
+## Rasmussen                       Rasmussen  0.767707851               1
+## Year                                 Year -0.180324877               0
+## .rnorm                             .rnorm  0.001708499               0
+##                        cor.y.abs
+## Republican           1.000000000
+## PropR.fctr           0.960536601
+## PropR                0.948420430
+## Rasmussen.sign.nonNA 0.903648754
+## Rasmussen.sign       0.901091456
+## SurveyUSA.nonNA      0.828157357
+## SurveyUSA            0.817495324
+## DiffCount            0.809277704
+## Rasmussen.nonNA      0.787939323
+## Rasmussen            0.767707851
+## Year                 0.180324877
+## .rnorm               0.001708499
 ```
 
 ```r
@@ -2351,33 +2497,103 @@ print(glb_feats_df <- orderBy(~-cor.y,
 ```
 
 ```
-## [1] "cor(DiffCount, PropR)=0.8274"
-## [1] "cor(Republican.fctr, DiffCount)=0.8093"
+## [1] "cor(PropR, PropR.fctr)=0.9550"
 ## [1] "cor(Republican.fctr, PropR)=0.9484"
+## [1] "cor(Republican.fctr, PropR.fctr)=0.9605"
 ```
 
 ```
 ## Warning in myfind_cor_features(feats_df = glb_feats_df, obs_df =
-## glb_trnobs_df, : Identified DiffCount as highly correlated with PropR
+## glb_trnobs_df, : Identified PropR as highly correlated with PropR.fctr
 ```
 
 ```
-##           id        cor.y exclude.as.feat   cor.y.abs cor.high.X freqRatio
-## 5 Republican  1.000000000               1 1.000000000       <NA>  1.127660
-## 3      PropR  0.948420430               0 0.948420430       <NA>  1.314286
-## 6  SurveyUSA  0.817495324               1 0.817495324       <NA>  1.333333
-## 2  DiffCount  0.809277704               0 0.809277704      PropR  1.111111
-## 4  Rasmussen  0.767707851               1 0.767707851       <NA>  1.666667
-## 1     .rnorm  0.001708499               0 0.001708499       <NA>  1.000000
-## 7       Year -0.180324877               0 0.180324877       <NA>  1.000000
-##   percentUnique zeroVar   nzv myNearZV is.cor.y.abs.low
-## 5             2   FALSE FALSE    FALSE            FALSE
-## 3            17   FALSE FALSE    FALSE            FALSE
-## 6            38   FALSE FALSE    FALSE            FALSE
-## 2            29   FALSE FALSE    FALSE            FALSE
-## 4            44   FALSE FALSE    FALSE            FALSE
-## 1           100   FALSE FALSE    FALSE            FALSE
-## 7             2   FALSE FALSE    FALSE            FALSE
+## [1] "cor(PropR.fctr, Rasmussen.sign.nonNA)=0.9000"
+## [1] "cor(Republican.fctr, PropR.fctr)=0.9605"
+## [1] "cor(Republican.fctr, Rasmussen.sign.nonNA)=0.9036"
+```
+
+```
+## Warning in myfind_cor_features(feats_df = glb_feats_df, obs_df =
+## glb_trnobs_df, : Identified Rasmussen.sign.nonNA as highly correlated with
+## PropR.fctr
+```
+
+```
+## [1] "cor(Rasmussen.nonNA, SurveyUSA.nonNA)=0.8897"
+## [1] "cor(Republican.fctr, Rasmussen.nonNA)=0.7879"
+## [1] "cor(Republican.fctr, SurveyUSA.nonNA)=0.8282"
+```
+
+```
+## Warning in myfind_cor_features(feats_df = glb_feats_df, obs_df =
+## glb_trnobs_df, : Identified Rasmussen.nonNA as highly correlated with
+## SurveyUSA.nonNA
+```
+
+```
+## [1] "cor(DiffCount, PropR.fctr)=0.8262"
+## [1] "cor(Republican.fctr, DiffCount)=0.8093"
+## [1] "cor(Republican.fctr, PropR.fctr)=0.9605"
+```
+
+```
+## Warning in myfind_cor_features(feats_df = glb_feats_df, obs_df =
+## glb_trnobs_df, : Identified DiffCount as highly correlated with PropR.fctr
+```
+
+```
+## [1] "cor(PropR.fctr, SurveyUSA.nonNA)=0.8237"
+## [1] "cor(Republican.fctr, PropR.fctr)=0.9605"
+## [1] "cor(Republican.fctr, SurveyUSA.nonNA)=0.8282"
+```
+
+```
+## Warning in myfind_cor_features(feats_df = glb_feats_df, obs_df =
+## glb_trnobs_df, : Identified SurveyUSA.nonNA as highly correlated with
+## PropR.fctr
+```
+
+```
+##                      id        cor.y exclude.as.feat   cor.y.abs
+## 9            Republican  1.000000000               1 1.000000000
+## 4            PropR.fctr  0.960536601               0 0.960536601
+## 3                 PropR  0.948420430               0 0.948420430
+## 8  Rasmussen.sign.nonNA  0.903648754               0 0.903648754
+## 7        Rasmussen.sign  0.901091456               1 0.901091456
+## 11      SurveyUSA.nonNA  0.828157357               0 0.828157357
+## 10            SurveyUSA  0.817495324               1 0.817495324
+## 2             DiffCount  0.809277704               0 0.809277704
+## 6       Rasmussen.nonNA  0.787939323               0 0.787939323
+## 5             Rasmussen  0.767707851               1 0.767707851
+## 1                .rnorm  0.001708499               0 0.001708499
+## 12                 Year -0.180324877               0 0.180324877
+##         cor.high.X freqRatio percentUnique zeroVar   nzv myNearZV
+## 9             <NA>  1.127660             2   FALSE FALSE    FALSE
+## 4             <NA>  1.222222             2   FALSE FALSE    FALSE
+## 3       PropR.fctr  1.314286            17   FALSE FALSE    FALSE
+## 8       PropR.fctr  1.380952             2   FALSE FALSE    FALSE
+## 7             <NA>  1.200000             2   FALSE FALSE    FALSE
+## 11      PropR.fctr  1.142857            41   FALSE FALSE    FALSE
+## 10            <NA>  1.333333            38   FALSE FALSE    FALSE
+## 2       PropR.fctr  1.111111            29   FALSE FALSE    FALSE
+## 6  SurveyUSA.nonNA  1.000000            44   FALSE FALSE    FALSE
+## 5             <NA>  1.666667            44   FALSE FALSE    FALSE
+## 1             <NA>  1.000000           100   FALSE FALSE    FALSE
+## 12            <NA>  1.000000             2   FALSE FALSE    FALSE
+##    is.cor.y.abs.low
+## 9             FALSE
+## 4             FALSE
+## 3             FALSE
+## 8             FALSE
+## 7             FALSE
+## 11            FALSE
+## 10            FALSE
+## 2             FALSE
+## 6             FALSE
+## 5             FALSE
+## 1             FALSE
+## 12            FALSE
 ```
 
 ```r
@@ -2393,15 +2609,15 @@ print(myplot_scatter(glb_feats_df, "percentUnique", "freqRatio",
 ```
 
 ```
-## Warning: Removed 4 rows containing missing values (geom_point).
+## Warning: Removed 6 rows containing missing values (geom_point).
 ```
 
 ```
-## Warning: Removed 4 rows containing missing values (geom_point).
+## Warning: Removed 6 rows containing missing values (geom_point).
 ```
 
 ```
-## Warning: Removed 4 rows containing missing values (geom_point).
+## Warning: Removed 6 rows containing missing values (geom_point).
 ```
 
 ![](RCP_template2_files/figure-html/select.features-1.png) 
@@ -2431,11 +2647,15 @@ mycheck_problem_data(glb_allobs_df, terminate = TRUE)
 
 ```
 ## [1] "numeric data missing in : "
-## Rasmussen SurveyUSA 
-##        46        71 
+##      Rasmussen      SurveyUSA Rasmussen.sign 
+##             46             71             46 
 ## [1] "numeric data w/ 0s in : "
-##  Rasmussen  SurveyUSA  DiffCount      PropR Republican 
-##          4          4          2         53         71 
+##            Rasmussen            SurveyUSA            DiffCount 
+##                    4                    4                    2 
+##                PropR           Republican       Rasmussen.sign 
+##                   53                   71                   45 
+##      Rasmussen.nonNA      SurveyUSA.nonNA Rasmussen.sign.nonNA 
+##                    4                    5                   60 
 ## [1] "numeric data w/ Infs in : "
 ## named integer(0)
 ## [1] "numeric data w/ NaNs in : "
@@ -2455,8 +2675,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "partition.data.training", major.inc
 
 ```
 ##                     label step_major step_minor    bgn    end elapsed
-## 8         select.features          5          0 19.814 20.413     0.6
-## 9 partition.data.training          6          0 20.414     NA      NA
+## 8         select.features          5          0 45.766 46.439   0.673
+## 9 partition.data.training          6          0 46.439     NA      NA
 ```
 
 ## Step `6.0: partition data training`
@@ -2530,7 +2750,7 @@ print("glb_feats_df:");   print(dim(glb_feats_df))
 ```
 
 ```
-## [1]  7 12
+## [1] 12 12
 ```
 
 ```r
@@ -2560,13 +2780,13 @@ if (glb_id_var != ".rownames")
 
 ```
 ##                              id cor.y exclude.as.feat cor.y.abs cor.high.X
-## 5                    Republican     1            TRUE         1       <NA>
+## 9                    Republican     1            TRUE         1       <NA>
 ## Republican.fctr Republican.fctr    NA            TRUE        NA       <NA>
 ##                 freqRatio percentUnique zeroVar   nzv myNearZV
-## 5                 1.12766             2   FALSE FALSE    FALSE
+## 9                 1.12766             2   FALSE FALSE    FALSE
 ## Republican.fctr        NA            NA      NA    NA       NA
 ##                 is.cor.y.abs.low interaction.feat rsp_var_raw rsp_var
-## 5                          FALSE               NA        TRUE      NA
+## 9                          FALSE               NA        TRUE      NA
 ## Republican.fctr               NA               NA          NA    TRUE
 ```
 
@@ -2616,7 +2836,7 @@ print("glb_allobs_df: "); print(dim(glb_allobs_df))
 ```
 
 ```
-## [1] 145  12
+## [1] 145  17
 ```
 
 ```r
@@ -2628,7 +2848,7 @@ print("glb_trnobs_df: "); print(dim(glb_trnobs_df))
 ```
 
 ```
-## [1] 100  11
+## [1] 100  16
 ```
 
 ```r
@@ -2640,7 +2860,7 @@ print("glb_fitobs_df: "); print(dim(glb_fitobs_df))
 ```
 
 ```
-## [1] 100  11
+## [1] 100  16
 ```
 
 ```r
@@ -2652,7 +2872,7 @@ print("glb_OOBobs_df: "); print(dim(glb_OOBobs_df))
 ```
 
 ```
-## [1] 45 11
+## [1] 45 16
 ```
 
 ```r
@@ -2664,7 +2884,7 @@ print("glb_newobs_df: "); print(dim(glb_newobs_df))
 ```
 
 ```
-## [1] 45 11
+## [1] 45 16
 ```
 
 ```r
@@ -2713,8 +2933,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "fit.models", major.inc=TRUE)
 
 ```
 ##                      label step_major step_minor    bgn    end elapsed
-## 9  partition.data.training          6          0 20.414 20.742   0.329
-## 10              fit.models          7          0 20.743     NA      NA
+## 9  partition.data.training          6          0 46.439 46.996   0.557
+## 10              fit.models          7          0 46.996     NA      NA
 ```
 
 ## Step `7.0: fit models`
@@ -2744,21 +2964,283 @@ max_cor_y_x_vars <- orderBy(~ -cor.y.abs,
 # }
 if (!is.null(glb_Baseline_mdl_var)) {
     if ((max_cor_y_x_vars[1] != glb_Baseline_mdl_var) & 
-        (glb_feats_df[max_cor_y_x_vars[1], "cor.y.abs"] > 
-         glb_feats_df[glb_Baseline_mdl_var, "cor.y.abs"]))
-        stop(max_cor_y_x_vars[1], " has a lower correlation with ", glb_rsp_var, 
+        (glb_feats_df[glb_feats_df$id == max_cor_y_x_vars[1], "cor.y.abs"] > 
+         glb_feats_df[glb_feats_df$id == glb_Baseline_mdl_var, "cor.y.abs"]))
+        stop(max_cor_y_x_vars[1], " has a higher correlation with ", glb_rsp_var, 
              " than the Baseline var: ", glb_Baseline_mdl_var)
 }
 
 glb_model_type <- ifelse(glb_is_regression, "regression", "classification")
     
 # Baseline
+#stop(here")
 if (!is.null(glb_Baseline_mdl_var)) 
-    ret_lst <- myfit_mdl_fn(model_id="Baseline", model_method="mybaseln_classfr",
-                            indep_vars_vctr=glb_Baseline_mdl_var,
-                            rsp_var=glb_rsp_var, rsp_var_out=glb_rsp_var_out,
-                            fit_df=glb_fitobs_df, OOB_df=glb_OOBobs_df)
+    ret_lst <- myfit_mdl(model_id="Baseline", 
+                         model_method="mybaseln_classfr",
+                        indep_vars_vctr=glb_Baseline_mdl_var,
+                        rsp_var=glb_rsp_var, rsp_var_out=glb_rsp_var_out,
+                        fit_df=glb_fitobs_df, OOB_df=glb_OOBobs_df)
+```
 
+```
+## [1] "fitting model: Baseline.mybaseln_classfr"
+## [1] "    indep_vars: PropR.fctr"
+## Fitting parameter = none on full training set
+## [1] "in Baseline.Classifier$fit"
+## [1] "class(x):"
+## [1] "matrix"
+## [1] "dimnames(x)[[2]]:"
+## [1] "PropR.fctrY"
+## [1] "length(x):"
+## [1] 100
+## [1] "head(x):"
+##     PropR.fctrY
+## 1             1
+## 100           1
+## 101           0
+## 103           1
+## 104           1
+## 106           0
+## [1] "class(y):"
+## [1] "factor"
+## [1] "length(y):"
+## [1] 100
+## [1] "head(y):"
+##   1 100 101 103 104 106 
+##   Y   Y   N   Y   Y   N 
+## Levels: N Y
+## [1] "    map_freq_df:"
+##   PropR.fctrY y .n
+## 1           1 Y 53
+## 2           0 N 45
+## 3           1 N  2
+## [1] "    map_df:"
+##   x y
+## 1 0 N
+## 2 1 Y
+##             Length Class      Mode     
+## x_names     1      -none-     character
+## map_df      2      data.frame list     
+## xNames      1      -none-     character
+## problemType 1      -none-     character
+## tuneValue   1      data.frame list     
+## obsLevels   2      -none-     character
+## [1] "    calling mypredict_mdl for fit:"
+```
+
+```
+## Loading required package: ROCR
+## Loading required package: gplots
+## 
+## Attaching package: 'gplots'
+## 
+## The following object is masked from 'package:stats':
+## 
+##     lowess
+```
+
+```
+## [1] "in Baseline.Classifier$prob"
+## [1] "    class(modelFit):"
+## [1] "list"
+## [1] "    modelFit:"
+## $x_names
+## [1] "PropR.fctrY"
+## 
+## $map_df
+##   x y
+## 1 0 N
+## 2 1 Y
+## 
+## $xNames
+## [1] "PropR.fctrY"
+## 
+## $problemType
+## [1] "Classification"
+## 
+## $tuneValue
+##   parameter
+## 1      none
+## 
+## $obsLevels
+## [1] "N" "Y"
+## 
+## [1] "in Baseline.Classifier$predict"
+## [1] "class(newdata):"
+## [1] "data.frame"
+## [1] "head(newdata):"
+##     PropR.fctrY
+## 1             1
+## 100           1
+## 101           0
+## 103           1
+## 104           1
+## 106           0
+## [1] "x_names: "
+## [1] "PropR.fctrY"
+## [1] "length(y):"
+## [1] 100
+## [1] "head(y):"
+## [1] Y Y N Y Y N
+## Levels: N Y
+## [1] "    outcomes_vctr:"
+##   [1] Y Y N Y Y N N N N N N N Y Y Y Y N Y Y Y Y Y Y N N Y N N N Y Y Y Y N Y
+##  [36] Y N N N Y N N Y N Y Y N N Y Y Y N N Y Y Y Y N Y Y Y Y Y Y Y N N N N N
+##  [71] N Y N N N N Y Y Y Y Y Y Y Y Y Y N N N N N Y N Y N N Y N Y Y
+## Levels: N Y
+## [1] "    head(prob_df): "
+##   N Y
+## 1 0 1
+## 2 0 1
+## 3 1 0
+## 4 0 1
+## 5 0 1
+## 6 1 0
+```
+
+![](RCP_template2_files/figure-html/fit.models_0-1.png) 
+
+```
+##    threshold   f.score
+## 1        0.0 0.6928105
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9814815
+## 7        0.6 0.9814815
+## 8        0.7 0.9814815
+## 9        0.8 0.9814815
+## 10       0.9 0.9814815
+## 11       1.0 0.9814815
+```
+
+![](RCP_template2_files/figure-html/fit.models_0-2.png) 
+
+```
+## [1] "Classifier Probability Threshold: 1.0000 to maximize f.score.fit"
+##   Republican.fctr Republican.fctr.predict.Baseline.mybaseln_classfr.N
+## 1               N                                                  45
+## 2               Y                                                  NA
+##   Republican.fctr.predict.Baseline.mybaseln_classfr.Y
+## 1                                                   2
+## 2                                                  53
+##          Prediction
+## Reference  N  Y
+##         N 45  2
+##         Y  0 53
+##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
+## AccuracyPValue  McnemarPValue 
+##   1.065928e-24   4.795001e-01 
+## [1] "    calling mypredict_mdl for OOB:"
+## [1] "in Baseline.Classifier$prob"
+## [1] "    class(modelFit):"
+## [1] "list"
+## [1] "    modelFit:"
+## $x_names
+## [1] "PropR.fctrY"
+## 
+## $map_df
+##   x y
+## 1 0 N
+## 2 1 Y
+## 
+## $xNames
+## [1] "PropR.fctrY"
+## 
+## $problemType
+## [1] "Classification"
+## 
+## $tuneValue
+##   parameter
+## 1      none
+## 
+## $obsLevels
+## [1] "N" "Y"
+## 
+## [1] "in Baseline.Classifier$predict"
+## [1] "class(newdata):"
+## [1] "data.frame"
+## [1] "head(newdata):"
+##     PropR.fctrY
+## 10            1
+## 102           0
+## 105           1
+## 108           0
+## 111           0
+## 114           0
+## [1] "x_names: "
+## [1] "PropR.fctrY"
+## [1] "length(y):"
+## [1] 45
+## [1] "head(y):"
+## [1] Y N Y N N N
+## Levels: N Y
+## [1] "    outcomes_vctr:"
+##  [1] Y N Y N N N Y Y Y Y Y N N N Y N N N Y Y N Y N Y N Y Y Y N N N N N Y Y
+## [36] Y Y Y N N N N N Y Y
+## Levels: N Y
+## [1] "    head(prob_df): "
+##   N Y
+## 1 0 1
+## 2 1 0
+## 3 0 1
+## 4 1 0
+## 5 1 0
+## 6 1 0
+```
+
+![](RCP_template2_files/figure-html/fit.models_0-3.png) 
+
+```
+##    threshold   f.score
+## 1        0.0 0.6363636
+## 2        0.1 0.9767442
+## 3        0.2 0.9767442
+## 4        0.3 0.9767442
+## 5        0.4 0.9767442
+## 6        0.5 0.9767442
+## 7        0.6 0.9767442
+## 8        0.7 0.9767442
+## 9        0.8 0.9767442
+## 10       0.9 0.9767442
+## 11       1.0 0.9767442
+```
+
+![](RCP_template2_files/figure-html/fit.models_0-4.png) 
+
+```
+## [1] "Classifier Probability Threshold: 1.0000 to maximize f.score.OOB"
+##   Republican.fctr Republican.fctr.predict.Baseline.mybaseln_classfr.N
+## 1               N                                                  23
+## 2               Y                                                  NA
+##   Republican.fctr.predict.Baseline.mybaseln_classfr.Y
+## 1                                                   1
+## 2                                                  21
+##          Prediction
+## Reference  N  Y
+##         N 23  1
+##         Y  0 21
+##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
+##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
+## AccuracyPValue  McnemarPValue 
+##   2.094379e-11   1.000000e+00 
+##                    model_id     model_method      feats max.nTuningRuns
+## 1 Baseline.mybaseln_classfr mybaseln_classfr PropR.fctr               0
+##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
+## 1                      0.356                  0.02   0.9787234
+##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
+## 1                      1       0.9814815             0.98
+##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
+## 1             0.9296161             0.9975687     0.9597586   0.9791667
+##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
+## 1                      1       0.9767442        0.9777778
+##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB
+## 1             0.8822957             0.9994375     0.9554896
+```
+
+```r
 # Most Frequent Outcome "MFO" model: mean(y) for regression
 #   Not using caret's nullModel since model stats not avl
 #   Cannot use rpart for multinomial classification since it predicts non-MFO
@@ -2794,20 +3276,6 @@ ret_lst <- myfit_mdl(model_id="MFO",
 ## tuneValue   1      data.frame list     
 ## obsLevels   2      -none-     character
 ## [1] "    calling mypredict_mdl for fit:"
-```
-
-```
-## Loading required package: ROCR
-## Loading required package: gplots
-## 
-## Attaching package: 'gplots'
-## 
-## The following object is masked from 'package:stats':
-## 
-##     lowess
-```
-
-```
 ## [1] "in MFO.Classifier$prob"
 ##      N    Y
 ## 1 0.53 0.47
@@ -2852,7 +3320,7 @@ ret_lst <- myfit_mdl(model_id="MFO",
 ##            model_id  model_method  feats max.nTuningRuns
 ## 1 MFO.myMFO_classfr myMFO_classfr .rnorm               0
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.323                 0.002         0.5
+## 1                      0.246                 0.003         0.5
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
 ## 1                    0.5               0             0.47
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
@@ -2889,7 +3357,7 @@ if (glb_is_classification)
 ## [1] "in Random.Classifier$prob"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-1.png) 
+![](RCP_template2_files/figure-html/fit.models_0-5.png) 
 
 ```
 ##    threshold   f.score
@@ -2906,7 +3374,7 @@ if (glb_is_classification)
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-2.png) 
+![](RCP_template2_files/figure-html/fit.models_0-6.png) 
 
 ```
 ## [1] "Classifier Probability Threshold: 0.4000 to maximize f.score.fit"
@@ -2925,7 +3393,7 @@ if (glb_is_classification)
 ## [1] "in Random.Classifier$prob"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-3.png) 
+![](RCP_template2_files/figure-html/fit.models_0-7.png) 
 
 ```
 ##    threshold   f.score
@@ -2942,7 +3410,7 @@ if (glb_is_classification)
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-4.png) 
+![](RCP_template2_files/figure-html/fit.models_0-8.png) 
 
 ```
 ## [1] "Classifier Probability Threshold: 0.4000 to maximize f.score.OOB"
@@ -2960,7 +3428,7 @@ if (glb_is_classification)
 ##                  model_id     model_method  feats max.nTuningRuns
 ## 1 Random.myrandom_classfr myrandom_classfr .rnorm               0
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.227                 0.002   0.4534324
+## 1                      0.224                 0.002   0.4534324
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
 ## 1                    0.4       0.6928105             0.53
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
@@ -2988,7 +3456,7 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0",
 
 ```
 ## [1] "fitting model: Max.cor.Y.cv.0.rpart"
-## [1] "    indep_vars: PropR, Year"
+## [1] "    indep_vars: PropR.fctr, Year"
 ```
 
 ```
@@ -2996,14 +3464,14 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0",
 ```
 
 ```
-## Fitting cp = 0.936 on full training set
+## Fitting cp = 0.957 on full training set
 ```
 
 ```
 ## Loading required package: rpart.plot
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-5.png) 
+![](RCP_template2_files/figure-html/fit.models_0-9.png) 
 
 ```
 ## Call:
@@ -3013,7 +3481,7 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0",
 ##   n= 100 
 ## 
 ##          CP nsplit rel error
-## 1 0.9361702      0         1
+## 1 0.9574468      0         1
 ## 
 ## Node number 1: 100 observations
 ##   predicted class=Y  expected loss=0.47  P(node) =1
@@ -3052,10 +3520,10 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0",
 ##   4.666667e-01   0.000000e+00   3.166008e-01   6.212800e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
 ##   8.521434e-01   2.667955e-06 
-##               model_id model_method       feats max.nTuningRuns
-## 1 Max.cor.Y.cv.0.rpart        rpart PropR, Year               0
+##               model_id model_method            feats max.nTuningRuns
+## 1 Max.cor.Y.cv.0.rpart        rpart PropR.fctr, Year               0
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.666                 0.009         0.5
+## 1                      0.753                 0.011         0.5
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
 ## 1                    0.5       0.6928105             0.53
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
@@ -3079,11 +3547,11 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0.cp.0",
 
 ```
 ## [1] "fitting model: Max.cor.Y.cv.0.cp.0.rpart"
-## [1] "    indep_vars: PropR, Year"
+## [1] "    indep_vars: PropR.fctr, Year"
 ## Fitting cp = 0 on full training set
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-6.png) 
+![](RCP_template2_files/figure-html/fit.models_0-10.png) 
 
 ```
 ## Call:
@@ -3093,33 +3561,33 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0.cp.0",
 ##   n= 100 
 ## 
 ##          CP nsplit  rel error
-## 1 0.9361702      0 1.00000000
-## 2 0.0000000      1 0.06382979
+## 1 0.9574468      0 1.00000000
+## 2 0.0000000      1 0.04255319
 ## 
 ## Variable importance
-## PropR  Year 
-##    92     8 
+## PropR.fctrY        Year 
+##          92           8 
 ## 
-## Node number 1: 100 observations,    complexity param=0.9361702
+## Node number 1: 100 observations,    complexity param=0.9574468
 ##   predicted class=Y  expected loss=0.47  P(node) =1
 ##     class counts:    47    53
 ##    probabilities: 0.470 0.530 
-##   left son=2 (44 obs) right son=3 (56 obs)
+##   left son=2 (45 obs) right son=3 (55 obs)
 ##   Primary splits:
-##       PropR < 0.4166667 to the left,  improve=44.14143, (0 missing)
-##       Year  < 2006      to the right, improve= 1.62000, (0 missing)
+##       PropR.fctrY < 0.5  to the left,  improve=45.96545, (0 missing)
+##       Year        < 2006 to the right, improve= 1.62000, (0 missing)
 ##   Surrogate splits:
-##       Year < 2006      to the right, agree=0.6, adj=0.091, (0 split)
+##       Year < 2006 to the right, agree=0.59, adj=0.089, (0 split)
 ## 
-## Node number 2: 44 observations
-##   predicted class=N  expected loss=0  P(node) =0.44
-##     class counts:    44     0
+## Node number 2: 45 observations
+##   predicted class=N  expected loss=0  P(node) =0.45
+##     class counts:    45     0
 ##    probabilities: 1.000 0.000 
 ## 
-## Node number 3: 56 observations
-##   predicted class=Y  expected loss=0.05357143  P(node) =0.56
-##     class counts:     3    53
-##    probabilities: 0.054 0.946 
+## Node number 3: 55 observations
+##   predicted class=Y  expected loss=0.03636364  P(node) =0.55
+##     class counts:     2    53
+##    probabilities: 0.036 0.964 
 ## 
 ## n= 100 
 ## 
@@ -3127,50 +3595,50 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0.cp.0",
 ##       * denotes terminal node
 ## 
 ## 1) root 100 47 Y (0.47000000 0.53000000)  
-##   2) PropR< 0.4166667 44  0 N (1.00000000 0.00000000) *
-##   3) PropR>=0.4166667 56  3 Y (0.05357143 0.94642857) *
+##   2) PropR.fctrY< 0.5 45  0 N (1.00000000 0.00000000) *
+##   3) PropR.fctrY>=0.5 55  2 Y (0.03636364 0.96363636) *
 ## [1] "    calling mypredict_mdl for fit:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-7.png) 
+![](RCP_template2_files/figure-html/fit.models_0-11.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9724771
-## 6        0.5 0.9724771
-## 7        0.6 0.9724771
-## 8        0.7 0.9724771
-## 9        0.8 0.9724771
-## 10       0.9 0.9724771
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9814815
+## 7        0.6 0.9814815
+## 8        0.7 0.9814815
+## 9        0.8 0.9814815
+## 10       0.9 0.9814815
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-8.png) 
+![](RCP_template2_files/figure-html/fit.models_0-12.png) 
 
 ```
 ## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.Max.cor.Y.cv.0.cp.0.rpart.N
-## 1               N                                                  44
+## 1               N                                                  45
 ## 2               Y                                                  NA
 ##   Republican.fctr.predict.Max.cor.Y.cv.0.cp.0.rpart.Y
-## 1                                                   3
+## 1                                                   2
 ## 2                                                  53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   1.065928e-24   4.795001e-01 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-9.png) 
+![](RCP_template2_files/figure-html/fit.models_0-13.png) 
 
 ```
 ##    threshold   f.score
@@ -3187,7 +3655,7 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0.cp.0",
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-10.png) 
+![](RCP_template2_files/figure-html/fit.models_0-14.png) 
 
 ```
 ## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.OOB"
@@ -3205,14 +3673,14 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y.cv.0.cp.0",
 ##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
 ##   2.094379e-11   1.000000e+00 
-##                    model_id model_method       feats max.nTuningRuns
-## 1 Max.cor.Y.cv.0.cp.0.rpart        rpart PropR, Year               0
+##                    model_id model_method            feats max.nTuningRuns
+## 1 Max.cor.Y.cv.0.cp.0.rpart        rpart PropR.fctr, Year               0
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.457                 0.008   0.9680851
+## 1                      0.446                 0.008   0.9787234
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.9       0.9724771             0.97
+## 1                    0.9       0.9814815             0.98
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9395649   0.9791667
+## 1             0.9296161             0.9975687     0.9597586   0.9791667
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
 ## 1                    0.9       0.9767442        0.9777778
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB
@@ -3232,13 +3700,13 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 
 ```
 ## [1] "fitting model: Max.cor.Y.rpart"
-## [1] "    indep_vars: PropR, Year"
+## [1] "    indep_vars: PropR.fctr, Year"
 ## Aggregating results
 ## Selecting tuning parameters
-## Fitting cp = 0.468 on full training set
+## Fitting cp = 0.479 on full training set
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-11.png) ![](RCP_template2_files/figure-html/fit.models_0-12.png) 
+![](RCP_template2_files/figure-html/fit.models_0-15.png) ![](RCP_template2_files/figure-html/fit.models_0-16.png) 
 
 ```
 ## Call:
@@ -3248,33 +3716,33 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 ##   n= 100 
 ## 
 ##          CP nsplit  rel error
-## 1 0.9361702      0 1.00000000
-## 2 0.0000000      1 0.06382979
+## 1 0.9574468      0 1.00000000
+## 2 0.0000000      1 0.04255319
 ## 
 ## Variable importance
-## PropR  Year 
-##    92     8 
+## PropR.fctrY        Year 
+##          92           8 
 ## 
-## Node number 1: 100 observations,    complexity param=0.9361702
+## Node number 1: 100 observations,    complexity param=0.9574468
 ##   predicted class=Y  expected loss=0.47  P(node) =1
 ##     class counts:    47    53
 ##    probabilities: 0.470 0.530 
-##   left son=2 (44 obs) right son=3 (56 obs)
+##   left son=2 (45 obs) right son=3 (55 obs)
 ##   Primary splits:
-##       PropR < 0.4166667 to the left,  improve=44.14143, (0 missing)
-##       Year  < 2006      to the right, improve= 1.62000, (0 missing)
+##       PropR.fctrY < 0.5  to the left,  improve=45.96545, (0 missing)
+##       Year        < 2006 to the right, improve= 1.62000, (0 missing)
 ##   Surrogate splits:
-##       Year < 2006      to the right, agree=0.6, adj=0.091, (0 split)
+##       Year < 2006 to the right, agree=0.59, adj=0.089, (0 split)
 ## 
-## Node number 2: 44 observations
-##   predicted class=N  expected loss=0  P(node) =0.44
-##     class counts:    44     0
+## Node number 2: 45 observations
+##   predicted class=N  expected loss=0  P(node) =0.45
+##     class counts:    45     0
 ##    probabilities: 1.000 0.000 
 ## 
-## Node number 3: 56 observations
-##   predicted class=Y  expected loss=0.05357143  P(node) =0.56
-##     class counts:     3    53
-##    probabilities: 0.054 0.946 
+## Node number 3: 55 observations
+##   predicted class=Y  expected loss=0.03636364  P(node) =0.55
+##     class counts:     2    53
+##    probabilities: 0.036 0.964 
 ## 
 ## n= 100 
 ## 
@@ -3282,50 +3750,50 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 ##       * denotes terminal node
 ## 
 ## 1) root 100 47 Y (0.47000000 0.53000000)  
-##   2) PropR< 0.4166667 44  0 N (1.00000000 0.00000000) *
-##   3) PropR>=0.4166667 56  3 Y (0.05357143 0.94642857) *
+##   2) PropR.fctrY< 0.5 45  0 N (1.00000000 0.00000000) *
+##   3) PropR.fctrY>=0.5 55  2 Y (0.03636364 0.96363636) *
 ## [1] "    calling mypredict_mdl for fit:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-13.png) 
+![](RCP_template2_files/figure-html/fit.models_0-17.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9724771
-## 6        0.5 0.9724771
-## 7        0.6 0.9724771
-## 8        0.7 0.9724771
-## 9        0.8 0.9724771
-## 10       0.9 0.9724771
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9814815
+## 7        0.6 0.9814815
+## 8        0.7 0.9814815
+## 9        0.8 0.9814815
+## 10       0.9 0.9814815
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-14.png) 
+![](RCP_template2_files/figure-html/fit.models_0-18.png) 
 
 ```
 ## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.Max.cor.Y.rpart.N
-## 1               N                                        44
+## 1               N                                        45
 ## 2               Y                                        NA
 ##   Republican.fctr.predict.Max.cor.Y.rpart.Y
-## 1                                         3
+## 1                                         2
 ## 2                                        53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   1.065928e-24   4.795001e-01 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-15.png) 
+![](RCP_template2_files/figure-html/fit.models_0-19.png) 
 
 ```
 ##    threshold   f.score
@@ -3342,7 +3810,7 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-16.png) 
+![](RCP_template2_files/figure-html/fit.models_0-20.png) 
 
 ```
 ## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.OOB"
@@ -3360,20 +3828,20 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 ##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
 ##   2.094379e-11   1.000000e+00 
-##          model_id model_method       feats max.nTuningRuns
-## 1 Max.cor.Y.rpart        rpart PropR, Year               3
+##          model_id model_method            feats max.nTuningRuns
+## 1 Max.cor.Y.rpart        rpart PropR.fctr, Year               3
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      1.074                 0.008   0.9680851
+## 1                      1.021                 0.008   0.9787234
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.9       0.9724771        0.9699755
+## 1                    0.9       0.9814815        0.9803922
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9395137   0.9791667
+## 1             0.9296161             0.9975687      0.960511   0.9791667
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
 ## 1                    0.9       0.9767442        0.9777778
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB
 ## 1             0.8822957             0.9994375     0.9554896
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1        0.001061306     0.002170073
+## 1         0.01698089      0.03419845
 ```
 
 ```r
@@ -3390,12 +3858,12 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 
 ```
 ## [1] "fitting model: Max.cor.Y.glm"
-## [1] "    indep_vars: PropR, Year"
+## [1] "    indep_vars: PropR.fctr, Year"
 ## Aggregating results
 ## Fitting final model on full training set
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-17.png) ![](RCP_template2_files/figure-html/fit.models_0-18.png) ![](RCP_template2_files/figure-html/fit.models_0-19.png) ![](RCP_template2_files/figure-html/fit.models_0-20.png) 
+![](RCP_template2_files/figure-html/fit.models_0-21.png) ![](RCP_template2_files/figure-html/fit.models_0-22.png) ![](RCP_template2_files/figure-html/fit.models_0-23.png) ![](RCP_template2_files/figure-html/fit.models_0-24.png) 
 
 ```
 ## 
@@ -3404,86 +3872,84 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 ## 
 ## Deviance Residuals: 
 ##      Min        1Q    Median        3Q       Max  
-## -2.24796  -0.06415   0.10045   0.10728   1.41010  
+## -2.63277  -0.00003   0.25199   0.25199   0.29817  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)  60.0519   703.3868   0.085 0.931963    
-## PropR        11.3739     3.1565   3.603 0.000314 ***
-## Year         -0.0330     0.3507  -0.094 0.925022    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##               Estimate Std. Error z value Pr(>|z|)
+## (Intercept)  150.44418 4409.68133   0.034    0.973
+## PropR.fctrY   24.80513 4350.02391   0.006    0.995
+## Year          -0.08574    0.36036  -0.238    0.812
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
 ##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  15.763  on 97  degrees of freedom
-## AIC: 21.763
+## Residual deviance:  17.127  on 97  degrees of freedom
+## AIC: 23.127
 ## 
-## Number of Fisher Scoring iterations: 8
+## Number of Fisher Scoring iterations: 20
 ## 
 ## [1] "    calling mypredict_mdl for fit:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-21.png) 
+![](RCP_template2_files/figure-html/fit.models_0-25.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9629630
-## 6        0.5 0.9622642
-## 7        0.6 0.9622642
-## 8        0.7 0.9523810
-## 9        0.8 0.9514563
-## 10       0.9 0.9411765
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9814815
+## 7        0.6 0.9814815
+## 8        0.7 0.9814815
+## 9        0.8 0.9814815
+## 10       0.9 0.9814815
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-22.png) 
+![](RCP_template2_files/figure-html/fit.models_0-26.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.Max.cor.Y.glm.N
-## 1               N                                      44
+## 1               N                                      45
 ## 2               Y                                      NA
 ##   Republican.fctr.predict.Max.cor.Y.glm.Y
-## 1                                       3
+## 1                                       2
 ## 2                                      53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   1.065928e-24   4.795001e-01 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-23.png) 
+![](RCP_template2_files/figure-html/fit.models_0-27.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6363636
-## 2        0.1 0.9545455
+## 2        0.1 0.9767442
 ## 3        0.2 0.9767442
 ## 4        0.3 0.9767442
 ## 5        0.4 0.9767442
 ## 6        0.5 0.9767442
 ## 7        0.6 0.9767442
 ## 8        0.7 0.9767442
-## 9        0.8 0.9756098
-## 10       0.9 0.9756098
+## 9        0.8 0.9767442
+## 10       0.9 0.9767442
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-24.png) 
+![](RCP_template2_files/figure-html/fit.models_0-28.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.7000 to maximize f.score.OOB"
+## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.OOB"
 ##   Republican.fctr Republican.fctr.predict.Max.cor.Y.glm.N
 ## 1               N                                      23
 ## 2               Y                                      NA
@@ -3498,20 +3964,20 @@ ret_lst <- myfit_mdl(model_id="Max.cor.Y",
 ##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
 ##   2.094379e-11   1.000000e+00 
-##        model_id model_method       feats max.nTuningRuns
-## 1 Max.cor.Y.glm          glm PropR, Year               1
+##        model_id model_method            feats max.nTuningRuns
+## 1 Max.cor.Y.glm          glm PropR.fctr, Year               1
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.879                 0.009   0.9955841
+## 1                      0.924                 0.013   0.9805299
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.3       0.9724771        0.9601716
+## 1                    0.9       0.9814815        0.9803922
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9200429   0.9990079
+## 1             0.9296161             0.9975687      0.960511   0.9791667
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
-## 1                    0.7       0.9767442        0.9777778
+## 1                    0.9       0.9767442        0.9777778
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB min.aic.fit
-## 1             0.8822957             0.9994375     0.9554896    21.76349
+## 1             0.8822957             0.9994375     0.9554896    23.12676
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1         0.01647589      0.03306002
+## 1         0.01698089      0.03419845
 ```
 
 ```r
@@ -3560,12 +4026,16 @@ if (length(int_feats <- setdiff(unique(glb_feats_df$cor.high.X), NA)) > 0) {
 
 ```
 ## [1] "fitting model: Interact.High.cor.Y.glm"
-## [1] "    indep_vars: PropR, Year, PropR:PropR"
+## [1] "    indep_vars: PropR.fctr, Year, PropR.fctr:PropR.fctr, PropR.fctr:SurveyUSA.nonNA"
 ## Aggregating results
 ## Fitting final model on full training set
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-25.png) ![](RCP_template2_files/figure-html/fit.models_0-26.png) ![](RCP_template2_files/figure-html/fit.models_0-27.png) ![](RCP_template2_files/figure-html/fit.models_0-28.png) 
+```
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+```
+
+![](RCP_template2_files/figure-html/fit.models_0-29.png) ![](RCP_template2_files/figure-html/fit.models_0-30.png) ![](RCP_template2_files/figure-html/fit.models_0-31.png) ![](RCP_template2_files/figure-html/fit.models_0-32.png) 
 
 ```
 ## 
@@ -3574,114 +4044,116 @@ if (length(int_feats <- setdiff(unique(glb_feats_df$cor.high.X), NA)) > 0) {
 ## 
 ## Deviance Residuals: 
 ##      Min        1Q    Median        3Q       Max  
-## -2.24796  -0.06415   0.10045   0.10728   1.41010  
+## -1.49187  -0.00001   0.00000   0.00004   1.31770  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)  60.0519   703.3868   0.085 0.931963    
-## PropR        11.3739     3.1565   3.603 0.000314 ***
-## Year         -0.0330     0.3507  -0.094 0.925022    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##                                 Estimate Std. Error z value Pr(>|z|)
+## (Intercept)                    1238.8777 11845.7326   0.105    0.917
+## PropR.fctrY                      24.7400 11767.5807   0.002    0.998
+## Year                             -0.6291     0.6778  -0.928    0.353
+## `PropR.fctrN:SurveyUSA.nonNA`    -0.0229   711.7788   0.000    1.000
+## `PropR.fctrY:SurveyUSA.nonNA`     1.0384     0.7733   1.343    0.179
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  15.763  on 97  degrees of freedom
-## AIC: 21.763
+##     Null deviance: 138.2692  on 99  degrees of freedom
+## Residual deviance:   7.2404  on 95  degrees of freedom
+## AIC: 17.24
 ## 
-## Number of Fisher Scoring iterations: 8
+## Number of Fisher Scoring iterations: 21
 ## 
 ## [1] "    calling mypredict_mdl for fit:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-29.png) 
+![](RCP_template2_files/figure-html/fit.models_0-33.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9629630
-## 6        0.5 0.9622642
-## 7        0.6 0.9622642
-## 8        0.7 0.9523810
-## 9        0.8 0.9514563
-## 10       0.9 0.9411765
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9719626
+## 7        0.6 0.9714286
+## 8        0.7 0.9807692
+## 9        0.8 0.9807692
+## 10       0.9 0.9807692
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-30.png) 
+![](RCP_template2_files/figure-html/fit.models_0-34.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.4000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.Interact.High.cor.Y.glm.N
-## 1               N                                                44
+## 1               N                                                45
 ## 2               Y                                                NA
 ##   Republican.fctr.predict.Interact.High.cor.Y.glm.Y
-## 1                                                 3
+## 1                                                 2
 ## 2                                                53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   1.065928e-24   4.795001e-01 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-31.png) 
+![](RCP_template2_files/figure-html/fit.models_0-35.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6363636
-## 2        0.1 0.9545455
-## 3        0.2 0.9767442
-## 4        0.3 0.9767442
-## 5        0.4 0.9767442
-## 6        0.5 0.9767442
-## 7        0.6 0.9767442
-## 8        0.7 0.9767442
-## 9        0.8 0.9756098
-## 10       0.9 0.9756098
+## 2        0.1 1.0000000
+## 3        0.2 1.0000000
+## 4        0.3 1.0000000
+## 5        0.4 1.0000000
+## 6        0.5 1.0000000
+## 7        0.6 1.0000000
+## 8        0.7 1.0000000
+## 9        0.8 1.0000000
+## 10       0.9 1.0000000
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-32.png) 
+![](RCP_template2_files/figure-html/fit.models_0-36.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.7000 to maximize f.score.OOB"
+## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.OOB"
 ##   Republican.fctr Republican.fctr.predict.Interact.High.cor.Y.glm.N
-## 1               N                                                23
+## 1               N                                                24
 ## 2               Y                                                NA
 ##   Republican.fctr.predict.Interact.High.cor.Y.glm.Y
-## 1                                                 1
+## 1                                                NA
 ## 2                                                21
 ##          Prediction
 ## Reference  N  Y
-##         N 23  1
+##         N 24  0
 ##         Y  0 21
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
+##   1.000000e+00   1.000000e+00   9.212949e-01   1.000000e+00   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
-##   2.094379e-11   1.000000e+00 
-##                  model_id model_method                    feats
-## 1 Interact.High.cor.Y.glm          glm PropR, Year, PropR:PropR
+##   5.187317e-13            NaN 
+##                  model_id model_method
+## 1 Interact.High.cor.Y.glm          glm
+##                                                                 feats
+## 1 PropR.fctr, Year, PropR.fctr:PropR.fctr, PropR.fctr:SurveyUSA.nonNA
 ##   max.nTuningRuns min.elapsedtime.everything min.elapsedtime.final
-## 1               1                      0.916                 0.007
+## 1               1                        1.2                 0.011
 ##   max.auc.fit opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1   0.9955841                    0.3       0.9724771        0.9601716
+## 1   0.9985949                    0.4       0.9814815        0.9705882
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9200429   0.9990079
+## 1             0.9296161             0.9975687     0.9411751           1
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
-## 1                    0.7       0.9767442        0.9777778
+## 1                    0.9               1                1
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB min.aic.fit
-## 1             0.8822957             0.9994375     0.9554896    21.76349
+## 1             0.9212949                     1             1    17.24042
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1         0.01647589      0.03306002
+## 1         0.02941176      0.05862176
 ```
 
 ```r
@@ -3712,12 +4184,12 @@ ret_lst <- myfit_mdl(model_id="Low.cor.X",
 
 ```
 ## [1] "fitting model: Low.cor.X.glm"
-## [1] "    indep_vars: PropR, .rnorm, Year"
+## [1] "    indep_vars: PropR.fctr, .rnorm, Year"
 ## Aggregating results
 ## Fitting final model on full training set
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-33.png) ![](RCP_template2_files/figure-html/fit.models_0-34.png) ![](RCP_template2_files/figure-html/fit.models_0-35.png) ![](RCP_template2_files/figure-html/fit.models_0-36.png) 
+![](RCP_template2_files/figure-html/fit.models_0-37.png) ![](RCP_template2_files/figure-html/fit.models_0-38.png) ![](RCP_template2_files/figure-html/fit.models_0-39.png) ![](RCP_template2_files/figure-html/fit.models_0-40.png) 
 
 ```
 ## 
@@ -3726,67 +4198,65 @@ ret_lst <- myfit_mdl(model_id="Low.cor.X",
 ## 
 ## Deviance Residuals: 
 ##      Min        1Q    Median        3Q       Max  
-## -2.15776  -0.05884   0.06712   0.10910   1.51115  
+## -2.72842  -0.00003   0.21780   0.26900   0.38774  
 ## 
 ## Coefficients:
-##               Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)   3.925655 720.486538   0.005 0.995653    
-## PropR        11.844865   3.457731   3.426 0.000613 ***
-## .rnorm        0.580409   0.902544   0.643 0.520171    
-## Year         -0.005232   0.359160  -0.015 0.988378    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##              Estimate Std. Error z value Pr(>|z|)
+## (Intercept)  227.2655  4372.5440   0.052    0.959
+## PropR.fctrY   24.8783  4307.9156   0.006    0.995
+## .rnorm        -0.3136     0.8554  -0.367    0.714
+## Year          -0.1240     0.3735  -0.332    0.740
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
 ##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  15.323  on 96  degrees of freedom
-## AIC: 23.323
+## Residual deviance:  16.992  on 96  degrees of freedom
+## AIC: 24.992
 ## 
-## Number of Fisher Scoring iterations: 8
+## Number of Fisher Scoring iterations: 20
 ## 
 ## [1] "    calling mypredict_mdl for fit:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-37.png) 
+![](RCP_template2_files/figure-html/fit.models_0-41.png) 
 
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9719626
-## 6        0.5 0.9719626
-## 7        0.6 0.9622642
-## 8        0.7 0.9523810
-## 9        0.8 0.9514563
-## 10       0.9 0.9411765
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9814815
+## 7        0.6 0.9814815
+## 8        0.7 0.9814815
+## 9        0.8 0.9814815
+## 10       0.9 0.9814815
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-38.png) 
+![](RCP_template2_files/figure-html/fit.models_0-42.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.Low.cor.X.glm.N
-## 1               N                                      44
+## 1               N                                      45
 ## 2               Y                                      NA
 ##   Republican.fctr.predict.Low.cor.X.glm.Y
-## 1                                       3
+## 1                                       2
 ## 2                                      53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   1.065928e-24   4.795001e-01 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-39.png) 
+![](RCP_template2_files/figure-html/fit.models_0-43.png) 
 
 ```
 ##    threshold   f.score
@@ -3798,15 +4268,15 @@ ret_lst <- myfit_mdl(model_id="Low.cor.X",
 ## 6        0.5 0.9767442
 ## 7        0.6 0.9767442
 ## 8        0.7 0.9767442
-## 9        0.8 0.9756098
-## 10       0.9 0.9756098
+## 9        0.8 0.9767442
+## 10       0.9 0.9523810
 ## 11       1.0 0.0000000
 ```
 
-![](RCP_template2_files/figure-html/fit.models_0-40.png) 
+![](RCP_template2_files/figure-html/fit.models_0-44.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.7000 to maximize f.score.OOB"
+## [1] "Classifier Probability Threshold: 0.8000 to maximize f.score.OOB"
 ##   Republican.fctr Republican.fctr.predict.Low.cor.X.glm.N
 ## 1               N                                      23
 ## 2               Y                                      NA
@@ -3821,20 +4291,20 @@ ret_lst <- myfit_mdl(model_id="Low.cor.X",
 ##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
 ##   2.094379e-11   1.000000e+00 
-##        model_id model_method               feats max.nTuningRuns
-## 1 Low.cor.X.glm          glm PropR, .rnorm, Year               1
+##        model_id model_method                    feats max.nTuningRuns
+## 1 Low.cor.X.glm          glm PropR.fctr, .rnorm, Year               1
 ##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.878                 0.007   0.9959855
+## 1                      1.224                 0.011   0.9799277
 ##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.3       0.9724771        0.9601716
+## 1                    0.9       0.9814815        0.9411765
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9201777   0.9980159
+## 1             0.9296161             0.9975687     0.8822163   0.9742063
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
-## 1                    0.7       0.9767442        0.9777778
+## 1                    0.8       0.9767442        0.9777778
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB min.aic.fit
-## 1             0.8822957             0.9994375     0.9554896    23.32288
+## 1             0.8822957             0.9994375     0.9554896    24.99235
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1         0.01647589      0.03246031
+## 1         0.07781622       0.1555551
 ```
 
 ```r
@@ -3845,8 +4315,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "fit.models", major.inc=FALSE)
 
 ```
 ##         label step_major step_minor    bgn    end elapsed
-## 10 fit.models          7          0 20.743 43.499  22.756
-## 11 fit.models          7          1 43.499     NA      NA
+## 10 fit.models          7          0 46.996 71.732  24.736
+## 11 fit.models          7          1 71.733     NA      NA
 ```
 
 
@@ -3856,7 +4326,7 @@ fit.models_1_chunk_df <- myadd_chunk(NULL, "fit.models_1_bgn")
 
 ```
 ##              label step_major step_minor    bgn end elapsed
-## 1 fit.models_1_bgn          1          0 46.768  NA      NA
+## 1 fit.models_1_bgn          1          0 75.507  NA      NA
 ```
 
 ```r
@@ -3939,15 +4409,33 @@ for (method in glb_models_method_vctr) {
 
 ```
 ##              label step_major step_minor    bgn    end elapsed
-## 1 fit.models_1_bgn          1          0 46.768 46.784   0.016
-## 2 fit.models_1_glm          2          0 46.785     NA      NA
+## 1 fit.models_1_bgn          1          0 75.507 75.524   0.017
+## 2 fit.models_1_glm          2          0 75.525     NA      NA
 ## [1] "fitting model: All.X.glm"
-## [1] "    indep_vars: PropR, DiffCount, .rnorm, Year"
+## [1] "    indep_vars: PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year"
 ## Aggregating results
 ## Fitting final model on full training set
 ```
 
-![](RCP_template2_files/figure-html/fit.models_1-1.png) ![](RCP_template2_files/figure-html/fit.models_1-2.png) ![](RCP_template2_files/figure-html/fit.models_1-3.png) ![](RCP_template2_files/figure-html/fit.models_1-4.png) 
+```
+## Warning: glm.fit: algorithm did not converge
+```
+
+```
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+```
+
+![](RCP_template2_files/figure-html/fit.models_1-1.png) ![](RCP_template2_files/figure-html/fit.models_1-2.png) ![](RCP_template2_files/figure-html/fit.models_1-3.png) 
+
+```
+## Warning in sqrt(crit * p * (1 - hh)/hh): NaNs produced
+```
+
+```
+## Warning in sqrt(crit * p * (1 - hh)/hh): NaNs produced
+```
+
+![](RCP_template2_files/figure-html/fit.models_1-4.png) 
 
 ```
 ## 
@@ -3955,26 +4443,28 @@ for (method in glb_models_method_vctr) {
 ## NULL
 ## 
 ## Deviance Residuals: 
-##      Min        1Q    Median        3Q       Max  
-## -2.03697  -0.04903   0.04874   0.12238   1.46226  
+##        Min          1Q      Median          3Q         Max  
+## -6.529e-05  -2.100e-08   2.100e-08   2.100e-08   6.099e-05  
 ## 
 ## Coefficients:
-##               Estimate Std. Error z value Pr(>|z|)  
-## (Intercept) -131.71434  782.95602  -0.168   0.8664  
-## PropR          9.12448    4.64053   1.966   0.0493 *
-## DiffCount      0.27978    0.44274   0.632   0.5274  
-## .rnorm         0.58537    0.93002   0.629   0.5291  
-## Year           0.06305    0.39049   0.161   0.8717  
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##                        Estimate Std. Error z value Pr(>|z|)
+## (Intercept)           3.036e+04  1.851e+07   0.002    0.999
+## PropR.fctrY           1.107e+02  8.319e+04   0.001    0.999
+## PropR                 3.666e+01  3.073e+05   0.000    1.000
+## Rasmussen.sign.nonNA  9.147e+01  8.387e+04   0.001    0.999
+## SurveyUSA.nonNA       2.151e+00  4.868e+03   0.000    1.000
+## DiffCount            -1.668e+00  1.933e+04   0.000    1.000
+## Rasmussen.nonNA       9.688e-01  6.381e+03   0.000    1.000
+## .rnorm               -2.697e+01  2.834e+04  -0.001    0.999
+## Year                 -1.523e+01  9.311e+03  -0.002    0.999
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  14.851  on 95  degrees of freedom
-## AIC: 24.851
+##     Null deviance: 1.3827e+02  on 99  degrees of freedom
+## Residual deviance: 1.4310e-08  on 91  degrees of freedom
+## AIC: 18
 ## 
-## Number of Fisher Scoring iterations: 8
+## Number of Fisher Scoring iterations: 25
 ## 
 ## [1] "    calling mypredict_mdl for fit:"
 ```
@@ -3984,36 +4474,36 @@ for (method in glb_models_method_vctr) {
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9719626
-## 6        0.5 0.9719626
-## 7        0.6 0.9622642
-## 8        0.7 0.9622642
-## 9        0.8 0.9423077
-## 10       0.9 0.9607843
+## 2        0.1 1.0000000
+## 3        0.2 1.0000000
+## 4        0.3 1.0000000
+## 5        0.4 1.0000000
+## 6        0.5 1.0000000
+## 7        0.6 1.0000000
+## 8        0.7 1.0000000
+## 9        0.8 1.0000000
+## 10       0.9 1.0000000
 ## 11       1.0 0.0000000
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_1-6.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.All.X.glm.N
-## 1               N                                  44
+## 1               N                                  47
 ## 2               Y                                  NA
 ##   Republican.fctr.predict.All.X.glm.Y
-## 1                                   3
+## 1                                  NA
 ## 2                                  53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 47  0
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   1.000000e+00   1.000000e+00   9.637833e-01   1.000000e+00   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   2.676621e-28            NaN 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
@@ -4022,53 +4512,55 @@ for (method in glb_models_method_vctr) {
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6363636
-## 2        0.1 0.9767442
-## 3        0.2 0.9767442
-## 4        0.3 0.9767442
-## 5        0.4 0.9767442
-## 6        0.5 0.9767442
-## 7        0.6 0.9767442
-## 8        0.7 0.9767442
-## 9        0.8 0.9767442
-## 10       0.9 0.9523810
+## 2        0.1 0.8000000
+## 3        0.2 0.8000000
+## 4        0.3 0.8000000
+## 5        0.4 0.7272727
+## 6        0.5 0.7272727
+## 7        0.6 0.7272727
+## 8        0.7 0.7272727
+## 9        0.8 0.7272727
+## 10       0.9 0.7272727
 ## 11       1.0 0.0000000
 ```
 
 ```
-## [1] "Classifier Probability Threshold: 0.8000 to maximize f.score.OOB"
+## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.OOB"
 ##   Republican.fctr Republican.fctr.predict.All.X.glm.N
-## 1               N                                  23
-## 2               Y                                  NA
+## 1               N                                  24
+## 2               Y                                   7
 ##   Republican.fctr.predict.All.X.glm.Y
-## 1                                   1
-## 2                                  21
+## 1                                  NA
+## 2                                  14
 ##          Prediction
 ## Reference  N  Y
-##         N 23  1
-##         Y  0 21
+##         N 24  0
+##         Y  7 14
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
+##   8.444444e-01   6.808511e-01   7.054484e-01   9.350908e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
-##   2.094379e-11   1.000000e+00 
-##    model_id model_method                          feats max.nTuningRuns
-## 1 All.X.glm          glm PropR, DiffCount, .rnorm, Year               1
-##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      1.119                 0.008    0.996387
-##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.3       0.9724771        0.9503676
+##   1.151592e-05   2.334220e-02 
+##    model_id model_method
+## 1 All.X.glm          glm
+##                                                                                                feats
+## 1 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year
+##   max.nTuningRuns min.elapsedtime.everything min.elapsedtime.final
+## 1               1                      0.949                 0.017
+##   max.auc.fit opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
+## 1           1                    0.9               1        0.9393382
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9005703   0.9980159
+## 1             0.9637833                     1     0.8774116   0.9047619
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
-## 1                    0.8       0.9767442        0.9777778
+## 1                    0.3             0.8        0.8444444
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB min.aic.fit
-## 1             0.8822957             0.9994375     0.9554896    24.85136
+## 1             0.7054484             0.9350908     0.6808511          18
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1         0.01591958      0.03155848
+## 1         0.03220848      0.06573868
 ##                   label step_major step_minor    bgn    end elapsed
-## 2      fit.models_1_glm          2          0 46.785 50.718   3.933
-## 3 fit.models_1_bayesglm          3          0 50.718     NA      NA
+## 2      fit.models_1_glm          2          0 75.525 79.198   3.673
+## 3 fit.models_1_bayesglm          3          0 79.198     NA      NA
 ## [1] "fitting model: All.X.bayesglm"
-## [1] "    indep_vars: PropR, DiffCount, .rnorm, Year"
+## [1] "    indep_vars: PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year"
 ```
 
 ```
@@ -4099,26 +4591,30 @@ for (method in glb_models_method_vctr) {
 ## NULL
 ## 
 ## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.0643  -0.1013   0.1088   0.1529   1.3610  
+##      Min        1Q    Median        3Q       Max  
+## -1.67829  -0.01399   0.06727   0.14698   0.59258  
 ## 
 ## Coefficients:
-##               Estimate Std. Error z value Pr(>|z|)    
-## (Intercept) -3.822e+00  6.407e+02  -0.006 0.995240    
-## PropR        8.858e+00  2.667e+00   3.321 0.000896 ***
-## DiffCount    1.047e-01  1.530e-01   0.685 0.493623    
-## .rnorm       2.649e-01  6.189e-01   0.428 0.668625    
-## Year        -4.896e-04  3.194e-01  -0.002 0.998777    
+##                       Estimate Std. Error z value Pr(>|z|)  
+## (Intercept)          563.60720  791.03987   0.712   0.4762  
+## PropR.fctrY            4.03285    2.04457   1.972   0.0486 *
+## PropR                  2.17526    2.57605   0.844   0.3984  
+## Rasmussen.sign.nonNA   2.83454    2.03403   1.394   0.1635  
+## SurveyUSA.nonNA        0.04765    0.06494   0.734   0.4631  
+## DiffCount              0.09858    0.15768   0.625   0.5318  
+## Rasmussen.nonNA        0.06129    0.07461   0.821   0.4114  
+## .rnorm                -0.24449    0.73282  -0.334   0.7387  
+## Year                  -0.28429    0.39488  -0.720   0.4716  
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  15.387  on 95  degrees of freedom
-## AIC: 25.387
+##     Null deviance: 138.2692  on 99  degrees of freedom
+## Residual deviance:   7.0345  on 91  degrees of freedom
+## AIC: 25.035
 ## 
-## Number of Fisher Scoring iterations: 19
+## Number of Fisher Scoring iterations: 35
 ## 
 ## [1] "    calling mypredict_mdl for fit:"
 ```
@@ -4130,34 +4626,34 @@ for (method in glb_models_method_vctr) {
 ## 1        0.0 0.6928105
 ## 2        0.1 0.9724771
 ## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9629630
-## 6        0.5 0.9719626
-## 7        0.6 0.9622642
-## 8        0.7 0.9523810
-## 9        0.8 0.9514563
-## 10       0.9 0.9504950
+## 4        0.3 0.9906542
+## 5        0.4 0.9906542
+## 6        0.5 0.9906542
+## 7        0.6 0.9906542
+## 8        0.7 0.9906542
+## 9        0.8 1.0000000
+## 10       0.9 0.9607843
 ## 11       1.0 0.0000000
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_1-10.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.8000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.All.X.bayesglm.N
-## 1               N                                       44
+## 1               N                                       47
 ## 2               Y                                       NA
 ##   Republican.fctr.predict.All.X.bayesglm.Y
-## 1                                        3
+## 1                                       NA
 ## 2                                       53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 47  0
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   1.000000e+00   1.000000e+00   9.637833e-01   1.000000e+00   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   2.676621e-28            NaN 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
@@ -4166,15 +4662,15 @@ for (method in glb_models_method_vctr) {
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6363636
-## 2        0.1 0.9333333
+## 2        0.1 0.9767442
 ## 3        0.2 0.9767442
 ## 4        0.3 0.9767442
 ## 5        0.4 0.9767442
 ## 6        0.5 0.9767442
 ## 7        0.6 0.9767442
-## 8        0.7 0.9767442
-## 9        0.8 0.9523810
-## 10       0.9 0.9756098
+## 8        0.7 1.0000000
+## 9        0.8 0.9756098
+## 10       0.9 0.8648649
 ## 11       1.0 0.0000000
 ```
 
@@ -4183,41 +4679,43 @@ for (method in glb_models_method_vctr) {
 ```
 ## [1] "Classifier Probability Threshold: 0.7000 to maximize f.score.OOB"
 ##   Republican.fctr Republican.fctr.predict.All.X.bayesglm.N
-## 1               N                                       23
+## 1               N                                       24
 ## 2               Y                                       NA
 ##   Republican.fctr.predict.All.X.bayesglm.Y
-## 1                                        1
+## 1                                       NA
 ## 2                                       21
 ##          Prediction
 ## Reference  N  Y
-##         N 23  1
+##         N 24  0
 ##         Y  0 21
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
+##   1.000000e+00   1.000000e+00   9.212949e-01   1.000000e+00   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
-##   2.094379e-11   1.000000e+00 
-##         model_id model_method                          feats
-## 1 All.X.bayesglm     bayesglm PropR, DiffCount, .rnorm, Year
+##   5.187317e-13            NaN 
+##         model_id model_method
+## 1 All.X.bayesglm     bayesglm
+##                                                                                                feats
+## 1 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year
 ##   max.nTuningRuns min.elapsedtime.everything min.elapsedtime.final
-## 1               1                      1.529                 0.025
+## 1               1                      1.617                 0.041
 ##   max.auc.fit opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1   0.9959855                    0.3       0.9724771        0.9601716
+## 1           1                    0.8               1        0.9699755
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9200429   0.9980159
+## 1             0.9637833                     1     0.9395137           1
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
-## 1                    0.7       0.9767442        0.9777778
+## 1                    0.7               1                1
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB min.aic.fit
-## 1             0.8822957             0.9994375     0.9554896    25.38721
+## 1             0.9212949                     1             1    25.03455
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1         0.01647589      0.03306002
-##                   label step_major step_minor    bgn   end elapsed
-## 3 fit.models_1_bayesglm          3          0 50.718 54.57   3.852
-## 4    fit.models_1_rpart          4          0 54.571    NA      NA
+## 1        0.001061306     0.002170073
+##                   label step_major step_minor    bgn    end elapsed
+## 3 fit.models_1_bayesglm          3          0 79.198 83.094   3.896
+## 4    fit.models_1_rpart          4          0 83.095     NA      NA
 ## [1] "fitting model: All.X.no.rnorm.rpart"
-## [1] "    indep_vars: PropR, DiffCount, Year"
+## [1] "    indep_vars: PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year"
 ## Aggregating results
 ## Selecting tuning parameters
-## Fitting cp = 0.468 on full training set
+## Fitting cp = 0.479 on full training set
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_1-13.png) ![](RCP_template2_files/figure-html/fit.models_1-14.png) 
@@ -4230,35 +4728,42 @@ for (method in glb_models_method_vctr) {
 ##   n= 100 
 ## 
 ##          CP nsplit  rel error
-## 1 0.9361702      0 1.00000000
-## 2 0.0000000      1 0.06382979
+## 1 0.9574468      0 1.00000000
+## 2 0.0000000      1 0.04255319
 ## 
 ## Variable importance
-## DiffCount     PropR      Year 
-##        48        48         4 
+##          PropR.fctrY            DiffCount                PropR 
+##                   18                   17                   17 
+##      Rasmussen.nonNA      SurveyUSA.nonNA Rasmussen.sign.nonNA 
+##                   17                   16                   16 
 ## 
-## Node number 1: 100 observations,    complexity param=0.9361702
+## Node number 1: 100 observations,    complexity param=0.9574468
 ##   predicted class=Y  expected loss=0.47  P(node) =1
 ##     class counts:    47    53
 ##    probabilities: 0.470 0.530 
-##   left son=2 (44 obs) right son=3 (56 obs)
+##   left son=2 (45 obs) right son=3 (55 obs)
 ##   Primary splits:
-##       PropR     < 0.4166667 to the left,  improve=44.14143, (0 missing)
-##       DiffCount < -0.5      to the left,  improve=44.14143, (0 missing)
-##       Year      < 2006      to the right, improve= 1.62000, (0 missing)
+##       PropR.fctrY     < 0.5       to the left,  improve=45.96545, (0 missing)
+##       Rasmussen.nonNA < 1.5       to the left,  improve=45.90029, (0 missing)
+##       PropR           < 0.4166667 to the left,  improve=44.14143, (0 missing)
+##       DiffCount       < -0.5      to the left,  improve=44.14143, (0 missing)
+##       SurveyUSA.nonNA < -0.5      to the left,  improve=42.19172, (0 missing)
 ##   Surrogate splits:
-##       DiffCount < -0.5      to the left,  agree=1.0, adj=1.000, (0 split)
-##       Year      < 2006      to the right, agree=0.6, adj=0.091, (0 split)
+##       PropR                < 0.4166667 to the left,  agree=0.99, adj=0.978, (0 split)
+##       DiffCount            < -0.5      to the left,  agree=0.99, adj=0.978, (0 split)
+##       Rasmussen.nonNA      < 1.5       to the left,  agree=0.98, adj=0.956, (0 split)
+##       SurveyUSA.nonNA      < -0.5      to the left,  agree=0.96, adj=0.911, (0 split)
+##       Rasmussen.sign.nonNA < 0.5       to the left,  agree=0.95, adj=0.889, (0 split)
 ## 
-## Node number 2: 44 observations
-##   predicted class=N  expected loss=0  P(node) =0.44
-##     class counts:    44     0
+## Node number 2: 45 observations
+##   predicted class=N  expected loss=0  P(node) =0.45
+##     class counts:    45     0
 ##    probabilities: 1.000 0.000 
 ## 
-## Node number 3: 56 observations
-##   predicted class=Y  expected loss=0.05357143  P(node) =0.56
-##     class counts:     3    53
-##    probabilities: 0.054 0.946 
+## Node number 3: 55 observations
+##   predicted class=Y  expected loss=0.03636364  P(node) =0.55
+##     class counts:     2    53
+##    probabilities: 0.036 0.964 
 ## 
 ## n= 100 
 ## 
@@ -4266,8 +4771,8 @@ for (method in glb_models_method_vctr) {
 ##       * denotes terminal node
 ## 
 ## 1) root 100 47 Y (0.47000000 0.53000000)  
-##   2) PropR< 0.4166667 44  0 N (1.00000000 0.00000000) *
-##   3) PropR>=0.4166667 56  3 Y (0.05357143 0.94642857) *
+##   2) PropR.fctrY< 0.5 45  0 N (1.00000000 0.00000000) *
+##   3) PropR.fctrY>=0.5 55  2 Y (0.03636364 0.96363636) *
 ## [1] "    calling mypredict_mdl for fit:"
 ```
 
@@ -4276,15 +4781,15 @@ for (method in glb_models_method_vctr) {
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9724771
-## 6        0.5 0.9724771
-## 7        0.6 0.9724771
-## 8        0.7 0.9724771
-## 9        0.8 0.9724771
-## 10       0.9 0.9724771
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9814815
+## 7        0.6 0.9814815
+## 8        0.7 0.9814815
+## 9        0.8 0.9814815
+## 10       0.9 0.9814815
 ## 11       1.0 0.0000000
 ```
 
@@ -4293,19 +4798,19 @@ for (method in glb_models_method_vctr) {
 ```
 ## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.All.X.no.rnorm.rpart.N
-## 1               N                                             44
+## 1               N                                             45
 ## 2               Y                                             NA
 ##   Republican.fctr.predict.All.X.no.rnorm.rpart.Y
-## 1                                              3
+## 1                                              2
 ## 2                                             53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01 
+##   1.065928e-24   4.795001e-01 
 ## [1] "    calling mypredict_mdl for OOB:"
 ```
 
@@ -4342,25 +4847,27 @@ for (method in glb_models_method_vctr) {
 ##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
 ##   2.094379e-11   1.000000e+00 
-##               model_id model_method                  feats max.nTuningRuns
-## 1 All.X.no.rnorm.rpart        rpart PropR, DiffCount, Year               3
-##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      0.972                 0.008   0.9680851
-##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.9       0.9724771        0.9699755
+##               model_id model_method
+## 1 All.X.no.rnorm.rpart        rpart
+##                                                                                        feats
+## 1 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year
+##   max.nTuningRuns min.elapsedtime.everything min.elapsedtime.final
+## 1               3                      0.969                 0.012
+##   max.auc.fit opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
+## 1   0.9787234                    0.9       0.9814815        0.9491422
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9148239               0.99377     0.9395137   0.9791667
+## 1             0.9296161             0.9975687     0.8975189   0.9791667
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
 ## 1                    0.9       0.9767442        0.9777778
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB
 ## 1             0.8822957             0.9994375     0.9554896
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1        0.001061306     0.002170073
+## 1          0.0371457      0.07490711
 ##                label step_major step_minor    bgn    end elapsed
-## 4 fit.models_1_rpart          4          0 54.571 59.192   4.621
-## 5    fit.models_1_rf          5          0 59.192     NA      NA
+## 4 fit.models_1_rpart          4          0 83.095 87.411   4.316
+## 5    fit.models_1_rf          5          0 87.411     NA      NA
 ## [1] "fitting model: All.X.no.rnorm.rf"
-## [1] "    indep_vars: PropR, DiffCount, Year"
+## [1] "    indep_vars: PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year"
 ```
 
 ```
@@ -4378,8 +4885,6 @@ for (method in glb_models_method_vctr) {
 ![](RCP_template2_files/figure-html/fit.models_1-18.png) 
 
 ```
-## note: only 2 unique complexity parameters in default grid. Truncating the grid to 2 .
-## 
 ## Aggregating results
 ## Selecting tuning parameters
 ## Fitting mtry = 2 on full training set
@@ -4403,7 +4908,7 @@ for (method in glb_models_method_vctr) {
 ## votes            200   matrix     numeric  
 ## oob.times        100   -none-     numeric  
 ## classes            2   -none-     character
-## importance         3   -none-     numeric  
+## importance         7   -none-     numeric  
 ## importanceSD       0   -none-     NULL     
 ## localImportance    0   -none-     NULL     
 ## proximity          0   -none-     NULL     
@@ -4413,7 +4918,7 @@ for (method in glb_models_method_vctr) {
 ## y                100   factor     numeric  
 ## test               0   -none-     NULL     
 ## inbag              0   -none-     NULL     
-## xNames             3   -none-     character
+## xNames             7   -none-     character
 ## problemType        1   -none-     character
 ## tuneValue          1   data.frame list     
 ## obsLevels          2   -none-     character
@@ -4426,21 +4931,21 @@ for (method in glb_models_method_vctr) {
 ##    threshold   f.score
 ## 1        0.0 0.6928105
 ## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 1.0000000
+## 3        0.2 0.9814815
+## 4        0.3 0.9906542
+## 5        0.4 0.9906542
 ## 6        0.5 1.0000000
 ## 7        0.6 1.0000000
-## 8        0.7 0.9904762
-## 9        0.8 0.9904762
+## 8        0.7 1.0000000
+## 9        0.8 1.0000000
 ## 10       0.9 0.9607843
-## 11       1.0 0.8958333
+## 11       1.0 0.8723404
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_1-22.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.6000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.8000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.All.X.no.rnorm.rf.N
 ## 1               N                                          47
 ## 2               Y                                          NA
@@ -4463,50 +4968,52 @@ for (method in glb_models_method_vctr) {
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6363636
-## 2        0.1 0.9545455
-## 3        0.2 0.9767442
+## 2        0.1 0.9333333
+## 3        0.2 0.9545455
 ## 4        0.3 0.9767442
 ## 5        0.4 0.9767442
 ## 6        0.5 0.9767442
 ## 7        0.6 0.9767442
 ## 8        0.7 0.9767442
-## 9        0.8 0.9523810
-## 10       0.9 0.9756098
-## 11       1.0 0.8648649
+## 9        0.8 1.0000000
+## 10       0.9 1.0000000
+## 11       1.0 0.6875000
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_1-24.png) 
 
 ```
-## [1] "Classifier Probability Threshold: 0.7000 to maximize f.score.OOB"
+## [1] "Classifier Probability Threshold: 0.9000 to maximize f.score.OOB"
 ##   Republican.fctr Republican.fctr.predict.All.X.no.rnorm.rf.N
-## 1               N                                          23
+## 1               N                                          24
 ## 2               Y                                          NA
 ##   Republican.fctr.predict.All.X.no.rnorm.rf.Y
-## 1                                           1
+## 1                                          NA
 ## 2                                          21
 ##          Prediction
 ## Reference  N  Y
-##         N 23  1
+##         N 24  0
 ##         Y  0 21
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.777778e-01   9.554896e-01   8.822957e-01   9.994375e-01   5.333333e-01 
+##   1.000000e+00   1.000000e+00   9.212949e-01   1.000000e+00   5.333333e-01 
 ## AccuracyPValue  McnemarPValue 
-##   2.094379e-11   1.000000e+00 
-##            model_id model_method                  feats max.nTuningRuns
-## 1 All.X.no.rnorm.rf           rf PropR, DiffCount, Year               2
-##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      1.381                  0.06           1
-##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.6               1        0.9595588
+##   5.187317e-13            NaN 
+##            model_id model_method
+## 1 All.X.no.rnorm.rf           rf
+##                                                                                        feats
+## 1 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year
+##   max.nTuningRuns min.elapsedtime.everything min.elapsedtime.final
+## 1               3                      1.193                 0.059
+##   max.auc.fit opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
+## 1           1                    0.8               1        0.9601716
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
-## 1             0.9637833                     1      0.918681   0.9980159
+## 1             0.9637833                     1     0.9201777           1
 ##   opt.prob.threshold.OOB max.f.score.OOB max.Accuracy.OOB
-## 1                    0.7       0.9767442        0.9777778
+## 1                    0.9               1                1
 ##   max.AccuracyLower.OOB max.AccuracyUpper.OOB max.Kappa.OOB
-## 1             0.8822957             0.9994375     0.9554896
+## 1             0.9212949                     1             1
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1          0.0191035      0.03825335
+## 1         0.01647589      0.03246031
 ```
 
 ```r
@@ -4595,6 +5102,7 @@ print(glb_models_df)
 
 ```
 ##                                            model_id     model_method
+## Baseline.mybaseln_classfr Baseline.mybaseln_classfr mybaseln_classfr
 ## MFO.myMFO_classfr                 MFO.myMFO_classfr    myMFO_classfr
 ## Random.myrandom_classfr     Random.myrandom_classfr myrandom_classfr
 ## Max.cor.Y.cv.0.rpart           Max.cor.Y.cv.0.rpart            rpart
@@ -4607,136 +5115,146 @@ print(glb_models_df)
 ## All.X.bayesglm                       All.X.bayesglm         bayesglm
 ## All.X.no.rnorm.rpart           All.X.no.rnorm.rpart            rpart
 ## All.X.no.rnorm.rf                 All.X.no.rnorm.rf               rf
-##                                                    feats max.nTuningRuns
-## MFO.myMFO_classfr                                 .rnorm               0
-## Random.myrandom_classfr                           .rnorm               0
-## Max.cor.Y.cv.0.rpart                         PropR, Year               0
-## Max.cor.Y.cv.0.cp.0.rpart                    PropR, Year               0
-## Max.cor.Y.rpart                              PropR, Year               3
-## Max.cor.Y.glm                                PropR, Year               1
-## Interact.High.cor.Y.glm         PropR, Year, PropR:PropR               1
-## Low.cor.X.glm                        PropR, .rnorm, Year               1
-## All.X.glm                 PropR, DiffCount, .rnorm, Year               1
-## All.X.bayesglm            PropR, DiffCount, .rnorm, Year               1
-## All.X.no.rnorm.rpart              PropR, DiffCount, Year               3
-## All.X.no.rnorm.rf                 PropR, DiffCount, Year               2
-##                           min.elapsedtime.everything min.elapsedtime.final
-## MFO.myMFO_classfr                              0.323                 0.002
-## Random.myrandom_classfr                        0.227                 0.002
-## Max.cor.Y.cv.0.rpart                           0.666                 0.009
-## Max.cor.Y.cv.0.cp.0.rpart                      0.457                 0.008
-## Max.cor.Y.rpart                                1.074                 0.008
-## Max.cor.Y.glm                                  0.879                 0.009
-## Interact.High.cor.Y.glm                        0.916                 0.007
-## Low.cor.X.glm                                  0.878                 0.007
-## All.X.glm                                      1.119                 0.008
-## All.X.bayesglm                                 1.529                 0.025
-## All.X.no.rnorm.rpart                           0.972                 0.008
-## All.X.no.rnorm.rf                              1.381                 0.060
-##                           max.auc.fit opt.prob.threshold.fit
-## MFO.myMFO_classfr           0.5000000                    0.5
-## Random.myrandom_classfr     0.4534324                    0.4
-## Max.cor.Y.cv.0.rpart        0.5000000                    0.5
-## Max.cor.Y.cv.0.cp.0.rpart   0.9680851                    0.9
-## Max.cor.Y.rpart             0.9680851                    0.9
-## Max.cor.Y.glm               0.9955841                    0.3
-## Interact.High.cor.Y.glm     0.9955841                    0.3
-## Low.cor.X.glm               0.9959855                    0.3
-## All.X.glm                   0.9963870                    0.3
-## All.X.bayesglm              0.9959855                    0.3
-## All.X.no.rnorm.rpart        0.9680851                    0.9
-## All.X.no.rnorm.rf           1.0000000                    0.6
-##                           max.f.score.fit max.Accuracy.fit
-## MFO.myMFO_classfr               0.0000000        0.4700000
-## Random.myrandom_classfr         0.6928105        0.5300000
-## Max.cor.Y.cv.0.rpart            0.6928105        0.5300000
-## Max.cor.Y.cv.0.cp.0.rpart       0.9724771        0.9700000
-## Max.cor.Y.rpart                 0.9724771        0.9699755
-## Max.cor.Y.glm                   0.9724771        0.9601716
-## Interact.High.cor.Y.glm         0.9724771        0.9601716
-## Low.cor.X.glm                   0.9724771        0.9601716
-## All.X.glm                       0.9724771        0.9503676
-## All.X.bayesglm                  0.9724771        0.9601716
-## All.X.no.rnorm.rpart            0.9724771        0.9699755
-## All.X.no.rnorm.rf               1.0000000        0.9595588
-##                           max.AccuracyLower.fit max.AccuracyUpper.fit
-## MFO.myMFO_classfr                     0.3694052             0.5724185
-## Random.myrandom_classfr               0.4275815             0.6305948
-## Max.cor.Y.cv.0.rpart                  0.4275815             0.6305948
-## Max.cor.Y.cv.0.cp.0.rpart             0.9148239             0.9937700
-## Max.cor.Y.rpart                       0.9148239             0.9937700
-## Max.cor.Y.glm                         0.9148239             0.9937700
-## Interact.High.cor.Y.glm               0.9148239             0.9937700
-## Low.cor.X.glm                         0.9148239             0.9937700
-## All.X.glm                             0.9148239             0.9937700
-## All.X.bayesglm                        0.9148239             0.9937700
-## All.X.no.rnorm.rpart                  0.9148239             0.9937700
-## All.X.no.rnorm.rf                     0.9637833             1.0000000
-##                           max.Kappa.fit max.auc.OOB opt.prob.threshold.OOB
-## MFO.myMFO_classfr             0.0000000   0.5000000                    0.5
-## Random.myrandom_classfr       0.0000000   0.5595238                    0.4
-## Max.cor.Y.cv.0.rpart          0.0000000   0.5000000                    0.5
-## Max.cor.Y.cv.0.cp.0.rpart     0.9395649   0.9791667                    0.9
-## Max.cor.Y.rpart               0.9395137   0.9791667                    0.9
-## Max.cor.Y.glm                 0.9200429   0.9990079                    0.7
-## Interact.High.cor.Y.glm       0.9200429   0.9990079                    0.7
-## Low.cor.X.glm                 0.9201777   0.9980159                    0.7
-## All.X.glm                     0.9005703   0.9980159                    0.8
-## All.X.bayesglm                0.9200429   0.9980159                    0.7
-## All.X.no.rnorm.rpart          0.9395137   0.9791667                    0.9
-## All.X.no.rnorm.rf             0.9186810   0.9980159                    0.7
-##                           max.f.score.OOB max.Accuracy.OOB
-## MFO.myMFO_classfr               0.0000000        0.5333333
-## Random.myrandom_classfr         0.6363636        0.4666667
-## Max.cor.Y.cv.0.rpart            0.6363636        0.4666667
-## Max.cor.Y.cv.0.cp.0.rpart       0.9767442        0.9777778
-## Max.cor.Y.rpart                 0.9767442        0.9777778
-## Max.cor.Y.glm                   0.9767442        0.9777778
-## Interact.High.cor.Y.glm         0.9767442        0.9777778
-## Low.cor.X.glm                   0.9767442        0.9777778
-## All.X.glm                       0.9767442        0.9777778
-## All.X.bayesglm                  0.9767442        0.9777778
-## All.X.no.rnorm.rpart            0.9767442        0.9777778
-## All.X.no.rnorm.rf               0.9767442        0.9777778
-##                           max.AccuracyLower.OOB max.AccuracyUpper.OOB
-## MFO.myMFO_classfr                     0.3787200             0.6833992
-## Random.myrandom_classfr               0.3166008             0.6212800
-## Max.cor.Y.cv.0.rpart                  0.3166008             0.6212800
-## Max.cor.Y.cv.0.cp.0.rpart             0.8822957             0.9994375
-## Max.cor.Y.rpart                       0.8822957             0.9994375
-## Max.cor.Y.glm                         0.8822957             0.9994375
-## Interact.High.cor.Y.glm               0.8822957             0.9994375
-## Low.cor.X.glm                         0.8822957             0.9994375
-## All.X.glm                             0.8822957             0.9994375
-## All.X.bayesglm                        0.8822957             0.9994375
-## All.X.no.rnorm.rpart                  0.8822957             0.9994375
-## All.X.no.rnorm.rf                     0.8822957             0.9994375
-##                           max.Kappa.OOB max.AccuracySD.fit max.KappaSD.fit
-## MFO.myMFO_classfr             0.0000000                 NA              NA
-## Random.myrandom_classfr       0.0000000                 NA              NA
-## Max.cor.Y.cv.0.rpart          0.0000000                 NA              NA
-## Max.cor.Y.cv.0.cp.0.rpart     0.9554896                 NA              NA
-## Max.cor.Y.rpart               0.9554896        0.001061306     0.002170073
-## Max.cor.Y.glm                 0.9554896        0.016475894     0.033060025
-## Interact.High.cor.Y.glm       0.9554896        0.016475894     0.033060025
-## Low.cor.X.glm                 0.9554896        0.016475894     0.032460307
-## All.X.glm                     0.9554896        0.015919585     0.031558479
-## All.X.bayesglm                0.9554896        0.016475894     0.033060025
-## All.X.no.rnorm.rpart          0.9554896        0.001061306     0.002170073
-## All.X.no.rnorm.rf             0.9554896        0.019103502     0.038253350
-##                           min.aic.fit
-## MFO.myMFO_classfr                  NA
-## Random.myrandom_classfr            NA
-## Max.cor.Y.cv.0.rpart               NA
-## Max.cor.Y.cv.0.cp.0.rpart          NA
-## Max.cor.Y.rpart                    NA
-## Max.cor.Y.glm                21.76349
-## Interact.High.cor.Y.glm      21.76349
-## Low.cor.X.glm                23.32288
-## All.X.glm                    24.85136
-## All.X.bayesglm               25.38721
-## All.X.no.rnorm.rpart               NA
-## All.X.no.rnorm.rf                  NA
+##                                                                                                                        feats
+## Baseline.mybaseln_classfr                                                                                         PropR.fctr
+## MFO.myMFO_classfr                                                                                                     .rnorm
+## Random.myrandom_classfr                                                                                               .rnorm
+## Max.cor.Y.cv.0.rpart                                                                                        PropR.fctr, Year
+## Max.cor.Y.cv.0.cp.0.rpart                                                                                   PropR.fctr, Year
+## Max.cor.Y.rpart                                                                                             PropR.fctr, Year
+## Max.cor.Y.glm                                                                                               PropR.fctr, Year
+## Interact.High.cor.Y.glm                                  PropR.fctr, Year, PropR.fctr:PropR.fctr, PropR.fctr:SurveyUSA.nonNA
+## Low.cor.X.glm                                                                                       PropR.fctr, .rnorm, Year
+## All.X.glm                 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year
+## All.X.bayesglm            PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year
+## All.X.no.rnorm.rpart              PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year
+## All.X.no.rnorm.rf                 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year
+##                           max.nTuningRuns min.elapsedtime.everything
+## Baseline.mybaseln_classfr               0                      0.356
+## MFO.myMFO_classfr                       0                      0.246
+## Random.myrandom_classfr                 0                      0.224
+## Max.cor.Y.cv.0.rpart                    0                      0.753
+## Max.cor.Y.cv.0.cp.0.rpart               0                      0.446
+## Max.cor.Y.rpart                         3                      1.021
+## Max.cor.Y.glm                           1                      0.924
+## Interact.High.cor.Y.glm                 1                      1.200
+## Low.cor.X.glm                           1                      1.224
+## All.X.glm                               1                      0.949
+## All.X.bayesglm                          1                      1.617
+## All.X.no.rnorm.rpart                    3                      0.969
+## All.X.no.rnorm.rf                       3                      1.193
+##                           min.elapsedtime.final max.auc.fit
+## Baseline.mybaseln_classfr                 0.020   0.9787234
+## MFO.myMFO_classfr                         0.003   0.5000000
+## Random.myrandom_classfr                   0.002   0.4534324
+## Max.cor.Y.cv.0.rpart                      0.011   0.5000000
+## Max.cor.Y.cv.0.cp.0.rpart                 0.008   0.9787234
+## Max.cor.Y.rpart                           0.008   0.9787234
+## Max.cor.Y.glm                             0.013   0.9805299
+## Interact.High.cor.Y.glm                   0.011   0.9985949
+## Low.cor.X.glm                             0.011   0.9799277
+## All.X.glm                                 0.017   1.0000000
+## All.X.bayesglm                            0.041   1.0000000
+## All.X.no.rnorm.rpart                      0.012   0.9787234
+## All.X.no.rnorm.rf                         0.059   1.0000000
+##                           opt.prob.threshold.fit max.f.score.fit
+## Baseline.mybaseln_classfr                    1.0       0.9814815
+## MFO.myMFO_classfr                            0.5       0.0000000
+## Random.myrandom_classfr                      0.4       0.6928105
+## Max.cor.Y.cv.0.rpart                         0.5       0.6928105
+## Max.cor.Y.cv.0.cp.0.rpart                    0.9       0.9814815
+## Max.cor.Y.rpart                              0.9       0.9814815
+## Max.cor.Y.glm                                0.9       0.9814815
+## Interact.High.cor.Y.glm                      0.4       0.9814815
+## Low.cor.X.glm                                0.9       0.9814815
+## All.X.glm                                    0.9       1.0000000
+## All.X.bayesglm                               0.8       1.0000000
+## All.X.no.rnorm.rpart                         0.9       0.9814815
+## All.X.no.rnorm.rf                            0.8       1.0000000
+##                           max.Accuracy.fit max.AccuracyLower.fit
+## Baseline.mybaseln_classfr        0.9800000             0.9296161
+## MFO.myMFO_classfr                0.4700000             0.3694052
+## Random.myrandom_classfr          0.5300000             0.4275815
+## Max.cor.Y.cv.0.rpart             0.5300000             0.4275815
+## Max.cor.Y.cv.0.cp.0.rpart        0.9800000             0.9296161
+## Max.cor.Y.rpart                  0.9803922             0.9296161
+## Max.cor.Y.glm                    0.9803922             0.9296161
+## Interact.High.cor.Y.glm          0.9705882             0.9296161
+## Low.cor.X.glm                    0.9411765             0.9296161
+## All.X.glm                        0.9393382             0.9637833
+## All.X.bayesglm                   0.9699755             0.9637833
+## All.X.no.rnorm.rpart             0.9491422             0.9296161
+## All.X.no.rnorm.rf                0.9601716             0.9637833
+##                           max.AccuracyUpper.fit max.Kappa.fit max.auc.OOB
+## Baseline.mybaseln_classfr             0.9975687     0.9597586   0.9791667
+## MFO.myMFO_classfr                     0.5724185     0.0000000   0.5000000
+## Random.myrandom_classfr               0.6305948     0.0000000   0.5595238
+## Max.cor.Y.cv.0.rpart                  0.6305948     0.0000000   0.5000000
+## Max.cor.Y.cv.0.cp.0.rpart             0.9975687     0.9597586   0.9791667
+## Max.cor.Y.rpart                       0.9975687     0.9605110   0.9791667
+## Max.cor.Y.glm                         0.9975687     0.9605110   0.9791667
+## Interact.High.cor.Y.glm               0.9975687     0.9411751   1.0000000
+## Low.cor.X.glm                         0.9975687     0.8822163   0.9742063
+## All.X.glm                             1.0000000     0.8774116   0.9047619
+## All.X.bayesglm                        1.0000000     0.9395137   1.0000000
+## All.X.no.rnorm.rpart                  0.9975687     0.8975189   0.9791667
+## All.X.no.rnorm.rf                     1.0000000     0.9201777   1.0000000
+##                           opt.prob.threshold.OOB max.f.score.OOB
+## Baseline.mybaseln_classfr                    1.0       0.9767442
+## MFO.myMFO_classfr                            0.5       0.0000000
+## Random.myrandom_classfr                      0.4       0.6363636
+## Max.cor.Y.cv.0.rpart                         0.5       0.6363636
+## Max.cor.Y.cv.0.cp.0.rpart                    0.9       0.9767442
+## Max.cor.Y.rpart                              0.9       0.9767442
+## Max.cor.Y.glm                                0.9       0.9767442
+## Interact.High.cor.Y.glm                      0.9       1.0000000
+## Low.cor.X.glm                                0.8       0.9767442
+## All.X.glm                                    0.3       0.8000000
+## All.X.bayesglm                               0.7       1.0000000
+## All.X.no.rnorm.rpart                         0.9       0.9767442
+## All.X.no.rnorm.rf                            0.9       1.0000000
+##                           max.Accuracy.OOB max.AccuracyLower.OOB
+## Baseline.mybaseln_classfr        0.9777778             0.8822957
+## MFO.myMFO_classfr                0.5333333             0.3787200
+## Random.myrandom_classfr          0.4666667             0.3166008
+## Max.cor.Y.cv.0.rpart             0.4666667             0.3166008
+## Max.cor.Y.cv.0.cp.0.rpart        0.9777778             0.8822957
+## Max.cor.Y.rpart                  0.9777778             0.8822957
+## Max.cor.Y.glm                    0.9777778             0.8822957
+## Interact.High.cor.Y.glm          1.0000000             0.9212949
+## Low.cor.X.glm                    0.9777778             0.8822957
+## All.X.glm                        0.8444444             0.7054484
+## All.X.bayesglm                   1.0000000             0.9212949
+## All.X.no.rnorm.rpart             0.9777778             0.8822957
+## All.X.no.rnorm.rf                1.0000000             0.9212949
+##                           max.AccuracyUpper.OOB max.Kappa.OOB
+## Baseline.mybaseln_classfr             0.9994375     0.9554896
+## MFO.myMFO_classfr                     0.6833992     0.0000000
+## Random.myrandom_classfr               0.6212800     0.0000000
+## Max.cor.Y.cv.0.rpart                  0.6212800     0.0000000
+## Max.cor.Y.cv.0.cp.0.rpart             0.9994375     0.9554896
+## Max.cor.Y.rpart                       0.9994375     0.9554896
+## Max.cor.Y.glm                         0.9994375     0.9554896
+## Interact.High.cor.Y.glm               1.0000000     1.0000000
+## Low.cor.X.glm                         0.9994375     0.9554896
+## All.X.glm                             0.9350908     0.6808511
+## All.X.bayesglm                        1.0000000     1.0000000
+## All.X.no.rnorm.rpart                  0.9994375     0.9554896
+## All.X.no.rnorm.rf                     1.0000000     1.0000000
+##                           max.AccuracySD.fit max.KappaSD.fit min.aic.fit
+## Baseline.mybaseln_classfr                 NA              NA          NA
+## MFO.myMFO_classfr                         NA              NA          NA
+## Random.myrandom_classfr                   NA              NA          NA
+## Max.cor.Y.cv.0.rpart                      NA              NA          NA
+## Max.cor.Y.cv.0.cp.0.rpart                 NA              NA          NA
+## Max.cor.Y.rpart                  0.016980890     0.034198448          NA
+## Max.cor.Y.glm                    0.016980890     0.034198448    23.12676
+## Interact.High.cor.Y.glm          0.029411765     0.058621757    17.24042
+## Low.cor.X.glm                    0.077816215     0.155555123    24.99235
+## All.X.glm                        0.032208484     0.065738682    18.00000
+## All.X.bayesglm                   0.001061306     0.002170073    25.03455
+## All.X.no.rnorm.rpart             0.037145697     0.074907115          NA
+## All.X.no.rnorm.rf                0.016475894     0.032460307          NA
 ```
 
 ```r
@@ -4747,8 +5265,8 @@ fit.models_1_chunk_df <- myadd_chunk(fit.models_1_chunk_df, "fit.models_1_end",
 
 ```
 ##              label step_major step_minor    bgn    end elapsed
-## 5  fit.models_1_rf          5          0 59.192 63.375   4.183
-## 6 fit.models_1_end          6          0 63.376     NA      NA
+## 5  fit.models_1_rf          5          0 87.411 91.335   3.924
+## 6 fit.models_1_end          6          0 91.335     NA      NA
 ```
 
 ```r
@@ -4757,8 +5275,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "fit.models", major.inc=FALSE)
 
 ```
 ##         label step_major step_minor    bgn    end elapsed
-## 11 fit.models          7          1 43.499 63.382  19.883
-## 12 fit.models          7          2 63.383     NA      NA
+## 11 fit.models          7          1 71.733 91.342  19.609
+## 12 fit.models          7          2 91.342     NA      NA
 ```
 
 
@@ -4811,6 +5329,7 @@ print(plt_models_df)
 
 ```
 ##                                            model_id     model_method
+## Baseline.mybaseln_classfr Baseline.mybaseln_classfr mybaseln_classfr
 ## MFO.myMFO_classfr                 MFO.myMFO_classfr    myMFO_classfr
 ## Random.myrandom_classfr     Random.myrandom_classfr myrandom_classfr
 ## Max.cor.Y.cv.0.rpart           Max.cor.Y.cv.0.rpart            rpart
@@ -4823,95 +5342,116 @@ print(plt_models_df)
 ## All.X.bayesglm                       All.X.bayesglm         bayesglm
 ## All.X.no.rnorm.rpart           All.X.no.rnorm.rpart            rpart
 ## All.X.no.rnorm.rf                 All.X.no.rnorm.rf               rf
-##                                                    feats max.nTuningRuns
-## MFO.myMFO_classfr                                 .rnorm               0
-## Random.myrandom_classfr                           .rnorm               0
-## Max.cor.Y.cv.0.rpart                         PropR, Year               0
-## Max.cor.Y.cv.0.cp.0.rpart                    PropR, Year               0
-## Max.cor.Y.rpart                              PropR, Year               3
-## Max.cor.Y.glm                                PropR, Year               1
-## Interact.High.cor.Y.glm         PropR, Year, PropR:PropR               1
-## Low.cor.X.glm                        PropR, .rnorm, Year               1
-## All.X.glm                 PropR, DiffCount, .rnorm, Year               1
-## All.X.bayesglm            PropR, DiffCount, .rnorm, Year               1
-## All.X.no.rnorm.rpart              PropR, DiffCount, Year               3
-## All.X.no.rnorm.rf                 PropR, DiffCount, Year               2
-##                           max.auc.fit opt.prob.threshold.fit
-## MFO.myMFO_classfr           0.5000000                    0.5
-## Random.myrandom_classfr     0.4534324                    0.4
-## Max.cor.Y.cv.0.rpart        0.5000000                    0.5
-## Max.cor.Y.cv.0.cp.0.rpart   0.9680851                    0.9
-## Max.cor.Y.rpart             0.9680851                    0.9
-## Max.cor.Y.glm               0.9955841                    0.3
-## Interact.High.cor.Y.glm     0.9955841                    0.3
-## Low.cor.X.glm               0.9959855                    0.3
-## All.X.glm                   0.9963870                    0.3
-## All.X.bayesglm              0.9959855                    0.3
-## All.X.no.rnorm.rpart        0.9680851                    0.9
-## All.X.no.rnorm.rf           1.0000000                    0.6
-##                           max.f.score.fit max.Accuracy.fit max.Kappa.fit
-## MFO.myMFO_classfr               0.0000000        0.4700000     0.0000000
-## Random.myrandom_classfr         0.6928105        0.5300000     0.0000000
-## Max.cor.Y.cv.0.rpart            0.6928105        0.5300000     0.0000000
-## Max.cor.Y.cv.0.cp.0.rpart       0.9724771        0.9700000     0.9395649
-## Max.cor.Y.rpart                 0.9724771        0.9699755     0.9395137
-## Max.cor.Y.glm                   0.9724771        0.9601716     0.9200429
-## Interact.High.cor.Y.glm         0.9724771        0.9601716     0.9200429
-## Low.cor.X.glm                   0.9724771        0.9601716     0.9201777
-## All.X.glm                       0.9724771        0.9503676     0.9005703
-## All.X.bayesglm                  0.9724771        0.9601716     0.9200429
-## All.X.no.rnorm.rpart            0.9724771        0.9699755     0.9395137
-## All.X.no.rnorm.rf               1.0000000        0.9595588     0.9186810
-##                           max.auc.OOB opt.prob.threshold.OOB
-## MFO.myMFO_classfr           0.5000000                    0.5
-## Random.myrandom_classfr     0.5595238                    0.4
-## Max.cor.Y.cv.0.rpart        0.5000000                    0.5
-## Max.cor.Y.cv.0.cp.0.rpart   0.9791667                    0.9
-## Max.cor.Y.rpart             0.9791667                    0.9
-## Max.cor.Y.glm               0.9990079                    0.7
-## Interact.High.cor.Y.glm     0.9990079                    0.7
-## Low.cor.X.glm               0.9980159                    0.7
-## All.X.glm                   0.9980159                    0.8
-## All.X.bayesglm              0.9980159                    0.7
-## All.X.no.rnorm.rpart        0.9791667                    0.9
-## All.X.no.rnorm.rf           0.9980159                    0.7
-##                           max.f.score.OOB max.Accuracy.OOB max.Kappa.OOB
-## MFO.myMFO_classfr               0.0000000        0.5333333     0.0000000
-## Random.myrandom_classfr         0.6363636        0.4666667     0.0000000
-## Max.cor.Y.cv.0.rpart            0.6363636        0.4666667     0.0000000
-## Max.cor.Y.cv.0.cp.0.rpart       0.9767442        0.9777778     0.9554896
-## Max.cor.Y.rpart                 0.9767442        0.9777778     0.9554896
-## Max.cor.Y.glm                   0.9767442        0.9777778     0.9554896
-## Interact.High.cor.Y.glm         0.9767442        0.9777778     0.9554896
-## Low.cor.X.glm                   0.9767442        0.9777778     0.9554896
-## All.X.glm                       0.9767442        0.9777778     0.9554896
-## All.X.bayesglm                  0.9767442        0.9777778     0.9554896
-## All.X.no.rnorm.rpart            0.9767442        0.9777778     0.9554896
-## All.X.no.rnorm.rf               0.9767442        0.9777778     0.9554896
+##                                                                                                                        feats
+## Baseline.mybaseln_classfr                                                                                         PropR.fctr
+## MFO.myMFO_classfr                                                                                                     .rnorm
+## Random.myrandom_classfr                                                                                               .rnorm
+## Max.cor.Y.cv.0.rpart                                                                                        PropR.fctr, Year
+## Max.cor.Y.cv.0.cp.0.rpart                                                                                   PropR.fctr, Year
+## Max.cor.Y.rpart                                                                                             PropR.fctr, Year
+## Max.cor.Y.glm                                                                                               PropR.fctr, Year
+## Interact.High.cor.Y.glm                                  PropR.fctr, Year, PropR.fctr:PropR.fctr, PropR.fctr:SurveyUSA.nonNA
+## Low.cor.X.glm                                                                                       PropR.fctr, .rnorm, Year
+## All.X.glm                 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year
+## All.X.bayesglm            PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, .rnorm, Year
+## All.X.no.rnorm.rpart              PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year
+## All.X.no.rnorm.rf                 PropR.fctr, PropR, Rasmussen.sign.nonNA, SurveyUSA.nonNA, DiffCount, Rasmussen.nonNA, Year
+##                           max.nTuningRuns max.auc.fit
+## Baseline.mybaseln_classfr               0   0.9787234
+## MFO.myMFO_classfr                       0   0.5000000
+## Random.myrandom_classfr                 0   0.4534324
+## Max.cor.Y.cv.0.rpart                    0   0.5000000
+## Max.cor.Y.cv.0.cp.0.rpart               0   0.9787234
+## Max.cor.Y.rpart                         3   0.9787234
+## Max.cor.Y.glm                           1   0.9805299
+## Interact.High.cor.Y.glm                 1   0.9985949
+## Low.cor.X.glm                           1   0.9799277
+## All.X.glm                               1   1.0000000
+## All.X.bayesglm                          1   1.0000000
+## All.X.no.rnorm.rpart                    3   0.9787234
+## All.X.no.rnorm.rf                       3   1.0000000
+##                           opt.prob.threshold.fit max.f.score.fit
+## Baseline.mybaseln_classfr                    1.0       0.9814815
+## MFO.myMFO_classfr                            0.5       0.0000000
+## Random.myrandom_classfr                      0.4       0.6928105
+## Max.cor.Y.cv.0.rpart                         0.5       0.6928105
+## Max.cor.Y.cv.0.cp.0.rpart                    0.9       0.9814815
+## Max.cor.Y.rpart                              0.9       0.9814815
+## Max.cor.Y.glm                                0.9       0.9814815
+## Interact.High.cor.Y.glm                      0.4       0.9814815
+## Low.cor.X.glm                                0.9       0.9814815
+## All.X.glm                                    0.9       1.0000000
+## All.X.bayesglm                               0.8       1.0000000
+## All.X.no.rnorm.rpart                         0.9       0.9814815
+## All.X.no.rnorm.rf                            0.8       1.0000000
+##                           max.Accuracy.fit max.Kappa.fit max.auc.OOB
+## Baseline.mybaseln_classfr        0.9800000     0.9597586   0.9791667
+## MFO.myMFO_classfr                0.4700000     0.0000000   0.5000000
+## Random.myrandom_classfr          0.5300000     0.0000000   0.5595238
+## Max.cor.Y.cv.0.rpart             0.5300000     0.0000000   0.5000000
+## Max.cor.Y.cv.0.cp.0.rpart        0.9800000     0.9597586   0.9791667
+## Max.cor.Y.rpart                  0.9803922     0.9605110   0.9791667
+## Max.cor.Y.glm                    0.9803922     0.9605110   0.9791667
+## Interact.High.cor.Y.glm          0.9705882     0.9411751   1.0000000
+## Low.cor.X.glm                    0.9411765     0.8822163   0.9742063
+## All.X.glm                        0.9393382     0.8774116   0.9047619
+## All.X.bayesglm                   0.9699755     0.9395137   1.0000000
+## All.X.no.rnorm.rpart             0.9491422     0.8975189   0.9791667
+## All.X.no.rnorm.rf                0.9601716     0.9201777   1.0000000
+##                           opt.prob.threshold.OOB max.f.score.OOB
+## Baseline.mybaseln_classfr                    1.0       0.9767442
+## MFO.myMFO_classfr                            0.5       0.0000000
+## Random.myrandom_classfr                      0.4       0.6363636
+## Max.cor.Y.cv.0.rpart                         0.5       0.6363636
+## Max.cor.Y.cv.0.cp.0.rpart                    0.9       0.9767442
+## Max.cor.Y.rpart                              0.9       0.9767442
+## Max.cor.Y.glm                                0.9       0.9767442
+## Interact.High.cor.Y.glm                      0.9       1.0000000
+## Low.cor.X.glm                                0.8       0.9767442
+## All.X.glm                                    0.3       0.8000000
+## All.X.bayesglm                               0.7       1.0000000
+## All.X.no.rnorm.rpart                         0.9       0.9767442
+## All.X.no.rnorm.rf                            0.9       1.0000000
+##                           max.Accuracy.OOB max.Kappa.OOB
+## Baseline.mybaseln_classfr        0.9777778     0.9554896
+## MFO.myMFO_classfr                0.5333333     0.0000000
+## Random.myrandom_classfr          0.4666667     0.0000000
+## Max.cor.Y.cv.0.rpart             0.4666667     0.0000000
+## Max.cor.Y.cv.0.cp.0.rpart        0.9777778     0.9554896
+## Max.cor.Y.rpart                  0.9777778     0.9554896
+## Max.cor.Y.glm                    0.9777778     0.9554896
+## Interact.High.cor.Y.glm          1.0000000     1.0000000
+## Low.cor.X.glm                    0.9777778     0.9554896
+## All.X.glm                        0.8444444     0.6808511
+## All.X.bayesglm                   1.0000000     1.0000000
+## All.X.no.rnorm.rpart             0.9777778     0.9554896
+## All.X.no.rnorm.rf                1.0000000     1.0000000
 ##                           inv.elapsedtime.everything inv.elapsedtime.final
-## MFO.myMFO_classfr                          3.0959752             500.00000
-## Random.myrandom_classfr                    4.4052863             500.00000
-## Max.cor.Y.cv.0.rpart                       1.5015015             111.11111
-## Max.cor.Y.cv.0.cp.0.rpart                  2.1881838             125.00000
-## Max.cor.Y.rpart                            0.9310987             125.00000
-## Max.cor.Y.glm                              1.1376564             111.11111
-## Interact.High.cor.Y.glm                    1.0917031             142.85714
-## Low.cor.X.glm                              1.1389522             142.85714
-## All.X.glm                                  0.8936550             125.00000
-## All.X.bayesglm                             0.6540222              40.00000
-## All.X.no.rnorm.rpart                       1.0288066             125.00000
-## All.X.no.rnorm.rf                          0.7241130              16.66667
+## Baseline.mybaseln_classfr                  2.8089888              50.00000
+## MFO.myMFO_classfr                          4.0650407             333.33333
+## Random.myrandom_classfr                    4.4642857             500.00000
+## Max.cor.Y.cv.0.rpart                       1.3280212              90.90909
+## Max.cor.Y.cv.0.cp.0.rpart                  2.2421525             125.00000
+## Max.cor.Y.rpart                            0.9794319             125.00000
+## Max.cor.Y.glm                              1.0822511              76.92308
+## Interact.High.cor.Y.glm                    0.8333333              90.90909
+## Low.cor.X.glm                              0.8169935              90.90909
+## All.X.glm                                  1.0537408              58.82353
+## All.X.bayesglm                             0.6184292              24.39024
+## All.X.no.rnorm.rpart                       1.0319917              83.33333
+## All.X.no.rnorm.rf                          0.8382230              16.94915
 ##                           inv.aic.fit
+## Baseline.mybaseln_classfr          NA
 ## MFO.myMFO_classfr                  NA
 ## Random.myrandom_classfr            NA
 ## Max.cor.Y.cv.0.rpart               NA
 ## Max.cor.Y.cv.0.cp.0.rpart          NA
 ## Max.cor.Y.rpart                    NA
-## Max.cor.Y.glm              0.04594852
-## Interact.High.cor.Y.glm    0.04594852
-## Low.cor.X.glm              0.04287636
-## All.X.glm                  0.04023925
-## All.X.bayesglm             0.03938992
+## Max.cor.Y.glm              0.04323996
+## Interact.High.cor.Y.glm    0.05800324
+## Low.cor.X.glm              0.04001224
+## All.X.glm                  0.05555556
+## All.X.bayesglm             0.03994480
 ## All.X.no.rnorm.rpart               NA
 ## All.X.no.rnorm.rf                  NA
 ```
@@ -4928,19 +5468,19 @@ print(myplot_radar(radar_inp_df=plt_models_df))
 ```
 ## Warning: The shape palette can deal with a maximum of 6 discrete values
 ## because more than 6 becomes difficult to discriminate; you have
-## 12. Consider specifying shapes manually if you must have them.
+## 13. Consider specifying shapes manually if you must have them.
 ```
 
 ```
-## Warning: Removed 4 rows containing missing values (geom_path).
+## Warning: Removed 5 rows containing missing values (geom_path).
 ```
 
 ```
-## Warning: Removed 87 rows containing missing values (geom_point).
+## Warning: Removed 103 rows containing missing values (geom_point).
 ```
 
 ```
-## Warning: Removed 7 rows containing missing values (geom_text).
+## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
 ```
@@ -4951,7 +5491,7 @@ print(myplot_radar(radar_inp_df=plt_models_df))
 ```
 ## Warning: The shape palette can deal with a maximum of 6 discrete values
 ## because more than 6 becomes difficult to discriminate; you have
-## 12. Consider specifying shapes manually if you must have them.
+## 13. Consider specifying shapes manually if you must have them.
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_2-1.png) 
@@ -5100,31 +5640,33 @@ print(dsp_models_df <- orderBy(model_sel_frmla, glb_models_df)[, dsp_models_cols
 
 ```
 ##                     model_id max.Accuracy.OOB max.auc.OOB max.Kappa.OOB
-## 6              Max.cor.Y.glm        0.9777778   0.9990079     0.9554896
-## 7    Interact.High.cor.Y.glm        0.9777778   0.9990079     0.9554896
-## 12         All.X.no.rnorm.rf        0.9777778   0.9980159     0.9554896
-## 8              Low.cor.X.glm        0.9777778   0.9980159     0.9554896
-## 9                  All.X.glm        0.9777778   0.9980159     0.9554896
-## 10            All.X.bayesglm        0.9777778   0.9980159     0.9554896
-## 4  Max.cor.Y.cv.0.cp.0.rpart        0.9777778   0.9791667     0.9554896
-## 5            Max.cor.Y.rpart        0.9777778   0.9791667     0.9554896
-## 11      All.X.no.rnorm.rpart        0.9777778   0.9791667     0.9554896
-## 1          MFO.myMFO_classfr        0.5333333   0.5000000     0.0000000
-## 2    Random.myrandom_classfr        0.4666667   0.5595238     0.0000000
-## 3       Max.cor.Y.cv.0.rpart        0.4666667   0.5000000     0.0000000
+## 8    Interact.High.cor.Y.glm        1.0000000   1.0000000     1.0000000
+## 11            All.X.bayesglm        1.0000000   1.0000000     1.0000000
+## 13         All.X.no.rnorm.rf        1.0000000   1.0000000     1.0000000
+## 7              Max.cor.Y.glm        0.9777778   0.9791667     0.9554896
+## 1  Baseline.mybaseln_classfr        0.9777778   0.9791667     0.9554896
+## 5  Max.cor.Y.cv.0.cp.0.rpart        0.9777778   0.9791667     0.9554896
+## 6            Max.cor.Y.rpart        0.9777778   0.9791667     0.9554896
+## 12      All.X.no.rnorm.rpart        0.9777778   0.9791667     0.9554896
+## 9              Low.cor.X.glm        0.9777778   0.9742063     0.9554896
+## 10                 All.X.glm        0.8444444   0.9047619     0.6808511
+## 2          MFO.myMFO_classfr        0.5333333   0.5000000     0.0000000
+## 3    Random.myrandom_classfr        0.4666667   0.5595238     0.0000000
+## 4       Max.cor.Y.cv.0.rpart        0.4666667   0.5000000     0.0000000
 ##    min.aic.fit opt.prob.threshold.OOB
-## 6     21.76349                    0.7
-## 7     21.76349                    0.7
-## 12          NA                    0.7
-## 8     23.32288                    0.7
-## 9     24.85136                    0.8
-## 10    25.38721                    0.7
-## 4           NA                    0.9
+## 8     17.24042                    0.9
+## 11    25.03455                    0.7
+## 13          NA                    0.9
+## 7     23.12676                    0.9
+## 1           NA                    1.0
 ## 5           NA                    0.9
-## 11          NA                    0.9
-## 1           NA                    0.5
-## 2           NA                    0.4
-## 3           NA                    0.5
+## 6           NA                    0.9
+## 12          NA                    0.9
+## 9     24.99235                    0.8
+## 10    18.00000                    0.3
+## 2           NA                    0.5
+## 3           NA                    0.4
+## 4           NA                    0.5
 ```
 
 ```r
@@ -5139,15 +5681,15 @@ print(myplot_radar(radar_inp_df=dsp_models_df))
 ```
 ## Warning: The shape palette can deal with a maximum of 6 discrete values
 ## because more than 6 becomes difficult to discriminate; you have
-## 12. Consider specifying shapes manually if you must have them.
+## 13. Consider specifying shapes manually if you must have them.
 ```
 
 ```
-## Warning: Removed 38 rows containing missing values (geom_point).
+## Warning: Removed 45 rows containing missing values (geom_point).
 ```
 
 ```
-## Warning: Removed 7 rows containing missing values (geom_text).
+## Warning: Removed 8 rows containing missing values (geom_text).
 ```
 
 ```
@@ -5158,7 +5700,7 @@ print(myplot_radar(radar_inp_df=dsp_models_df))
 ```
 ## Warning: The shape palette can deal with a maximum of 6 discrete values
 ## because more than 6 becomes difficult to discriminate; you have
-## 12. Consider specifying shapes manually if you must have them.
+## 13. Consider specifying shapes manually if you must have them.
 ```
 
 ![](RCP_template2_files/figure-html/fit.models_2-3.png) 
@@ -5181,7 +5723,7 @@ print(sprintf("Best model id: %s", dsp_models_df[1, "model_id"]))
 ```
 
 ```
-## [1] "Best model id: Max.cor.Y.glm"
+## [1] "Best model id: Interact.High.cor.Y.glm"
 ```
 
 ```r
@@ -5206,23 +5748,23 @@ myprint_mdl(glb_sel_mdl <- glb_models_lst[[glb_sel_mdl_id]])
 ## 
 ## Deviance Residuals: 
 ##      Min        1Q    Median        3Q       Max  
-## -2.24796  -0.06415   0.10045   0.10728   1.41010  
+## -1.49187  -0.00001   0.00000   0.00004   1.31770  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)  60.0519   703.3868   0.085 0.931963    
-## PropR        11.3739     3.1565   3.603 0.000314 ***
-## Year         -0.0330     0.3507  -0.094 0.925022    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##                                 Estimate Std. Error z value Pr(>|z|)
+## (Intercept)                    1238.8777 11845.7326   0.105    0.917
+## PropR.fctrY                      24.7400 11767.5807   0.002    0.998
+## Year                             -0.6291     0.6778  -0.928    0.353
+## `PropR.fctrN:SurveyUSA.nonNA`    -0.0229   711.7788   0.000    1.000
+## `PropR.fctrY:SurveyUSA.nonNA`     1.0384     0.7733   1.343    0.179
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  15.763  on 97  degrees of freedom
-## AIC: 21.763
+##     Null deviance: 138.2692  on 99  degrees of freedom
+## Residual deviance:   7.2404  on 95  degrees of freedom
+## AIC: 17.24
 ## 
-## Number of Fisher Scoring iterations: 8
+## Number of Fisher Scoring iterations: 21
 ```
 
 ```
@@ -5288,9 +5830,16 @@ print(glb_featsimp_df)
 ```
 
 ```
-##       importance Max.cor.Y.glm.importance
-## PropR        100                      100
-## Year           0                        0
+##                                importance
+## `PropR.fctrY:SurveyUSA.nonNA` 100.0000000
+## Year                           69.1263850
+## PropR.fctrY                     0.1541784
+## `PropR.fctrN:SurveyUSA.nonNA`   0.0000000
+##                               Interact.High.cor.Y.glm.importance
+## `PropR.fctrY:SurveyUSA.nonNA`                        100.0000000
+## Year                                                  69.1263850
+## PropR.fctrY                                            0.1541784
+## `PropR.fctrN:SurveyUSA.nonNA`                          0.0000000
 ```
 
 ```r
@@ -5363,38 +5912,31 @@ if (glb_is_classification && glb_is_binomial)
     glb_analytics_diag_plots(obs_df=glb_OOBobs_df, mdl_id=glb_sel_mdl_id)                  
 ```
 
-![](RCP_template2_files/figure-html/fit.models_2-8.png) ![](RCP_template2_files/figure-html/fit.models_2-9.png) 
+![](RCP_template2_files/figure-html/fit.models_2-8.png) ![](RCP_template2_files/figure-html/fit.models_2-9.png) ![](RCP_template2_files/figure-html/fit.models_2-10.png) 
 
 ```
 ## [1] "Min/Max Boundaries: "
-##     .rownames Republican.fctr Republican.fctr.predict.Max.cor.Y.glm.prob
-## 10         10               Y                                0.993457132
-## 102       102               N                                0.001741817
-## 24         24               N                                0.774083765
-##     Republican.fctr.predict.Max.cor.Y.glm
-## 10                                      Y
-## 102                                     N
-## 24                                      Y
-##     Republican.fctr.predict.Max.cor.Y.glm.accurate
-## 10                                            TRUE
-## 102                                           TRUE
-## 24                                           FALSE
-##     Republican.fctr.predict.Max.cor.Y.glm.error .label
-## 10                                   0.00000000     10
-## 102                                  0.00000000    102
-## 24                                   0.07408377     24
+##    .rownames Republican.fctr
+## 10        10               Y
+##    Republican.fctr.predict.Interact.High.cor.Y.glm.prob
+## 10                                                    1
+##    Republican.fctr.predict.Interact.High.cor.Y.glm
+## 10                                               Y
+##    Republican.fctr.predict.Interact.High.cor.Y.glm.accurate
+## 10                                                     TRUE
+##    Republican.fctr.predict.Interact.High.cor.Y.glm.error .label
+## 10                                                     0     10
 ## [1] "Inaccurate: "
-##    .rownames Republican.fctr Republican.fctr.predict.Max.cor.Y.glm.prob
-## 24        24               N                                  0.7740838
-##    Republican.fctr.predict.Max.cor.Y.glm
-## 24                                     Y
-##    Republican.fctr.predict.Max.cor.Y.glm.accurate
-## 24                                          FALSE
-##    Republican.fctr.predict.Max.cor.Y.glm.error
-## 24                                  0.07408377
+## [1] .rownames                                               
+## [2] Republican.fctr                                         
+## [3] Republican.fctr.predict.Interact.High.cor.Y.glm.prob    
+## [4] Republican.fctr.predict.Interact.High.cor.Y.glm         
+## [5] Republican.fctr.predict.Interact.High.cor.Y.glm.accurate
+## [6] Republican.fctr.predict.Interact.High.cor.Y.glm.error   
+## <0 rows> (or 0-length row.names)
 ```
 
-![](RCP_template2_files/figure-html/fit.models_2-10.png) 
+![](RCP_template2_files/figure-html/fit.models_2-11.png) 
 
 ```r
 # gather predictions from models better than MFO.*
@@ -5439,9 +5981,9 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "fit.models", major.inc=FALSE)
 ```
 
 ```
-##         label step_major step_minor    bgn   end elapsed
-## 12 fit.models          7          2 63.383 76.03  12.647
-## 13 fit.models          7          3 76.031    NA      NA
+##         label step_major step_minor     bgn   end elapsed
+## 12 fit.models          7          2  91.342 104.2  12.858
+## 13 fit.models          7          3 104.200    NA      NA
 ```
 
 
@@ -5466,9 +6008,9 @@ print(setdiff(names(glb_OOBobs_df), names(glb_allobs_df)))
 ```
 
 ```
-## [1] "Republican.fctr.predict.Max.cor.Y.glm.prob"    
-## [2] "Republican.fctr.predict.Max.cor.Y.glm"         
-## [3] "Republican.fctr.predict.Max.cor.Y.glm.accurate"
+## [1] "Republican.fctr.predict.Interact.High.cor.Y.glm.prob"    
+## [2] "Republican.fctr.predict.Interact.High.cor.Y.glm"         
+## [3] "Republican.fctr.predict.Interact.High.cor.Y.glm.accurate"
 ```
 
 ```r
@@ -5522,9 +6064,9 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "fit.data.training", major.inc=TRUE)
 ```
 
 ```
-##                label step_major step_minor    bgn    end elapsed
-## 13        fit.models          7          3 76.031 80.026   3.995
-## 14 fit.data.training          8          0 80.027     NA      NA
+##                label step_major step_minor     bgn     end elapsed
+## 13        fit.models          7          3 104.200 107.855   3.655
+## 14 fit.data.training          8          0 107.855      NA      NA
 ```
 
 ## Step `8.0: fit data training`
@@ -5608,9 +6150,13 @@ if (!is.null(glb_fin_mdl_id) && (glb_fin_mdl_id %in% names(glb_models_lst))) {
 
 ```
 ## [1] "fitting model: Final.glm"
-## [1] "    indep_vars: PropR, Year"
+## [1] "    indep_vars: PropR.fctr, Year, PropR.fctr:PropR.fctr, PropR.fctr:SurveyUSA.nonNA"
 ## Aggregating results
 ## Fitting final model on full training set
+```
+
+```
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 ```
 
 ![](RCP_template2_files/figure-html/fit.data.training_0-1.png) ![](RCP_template2_files/figure-html/fit.data.training_0-2.png) ![](RCP_template2_files/figure-html/fit.data.training_0-3.png) ![](RCP_template2_files/figure-html/fit.data.training_0-4.png) 
@@ -5622,23 +6168,23 @@ if (!is.null(glb_fin_mdl_id) && (glb_fin_mdl_id %in% names(glb_models_lst))) {
 ## 
 ## Deviance Residuals: 
 ##      Min        1Q    Median        3Q       Max  
-## -2.24796  -0.06415   0.10045   0.10728   1.41010  
+## -1.49187  -0.00001   0.00000   0.00004   1.31770  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept)  60.0519   703.3868   0.085 0.931963    
-## PropR        11.3739     3.1565   3.603 0.000314 ***
-## Year         -0.0330     0.3507  -0.094 0.925022    
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+##                                 Estimate Std. Error z value Pr(>|z|)
+## (Intercept)                    1238.8777 11845.7326   0.105    0.917
+## PropR.fctrY                      24.7400 11767.5807   0.002    0.998
+## Year                             -0.6291     0.6778  -0.928    0.353
+## `PropR.fctrN:SurveyUSA.nonNA`    -0.0229   711.7788   0.000    1.000
+## `PropR.fctrY:SurveyUSA.nonNA`     1.0384     0.7733   1.343    0.179
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 138.269  on 99  degrees of freedom
-## Residual deviance:  15.763  on 97  degrees of freedom
-## AIC: 21.763
+##     Null deviance: 138.2692  on 99  degrees of freedom
+## Residual deviance:   7.2404  on 95  degrees of freedom
+## AIC: 17.24
 ## 
-## Number of Fisher Scoring iterations: 8
+## Number of Fisher Scoring iterations: 21
 ## 
 ## [1] "    calling mypredict_mdl for fit:"
 ```
@@ -5648,34 +6194,34 @@ if (!is.null(glb_fin_mdl_id) && (glb_fin_mdl_id %in% names(glb_models_lst))) {
 ```
 ##    threshold   f.score
 ## 1        0.0 0.6928105
-## 2        0.1 0.9724771
-## 3        0.2 0.9724771
-## 4        0.3 0.9724771
-## 5        0.4 0.9629630
-## 6        0.5 0.9622642
-## 7        0.6 0.9622642
-## 8        0.7 0.9523810
-## 9        0.8 0.9514563
-## 10       0.9 0.9411765
+## 2        0.1 0.9814815
+## 3        0.2 0.9814815
+## 4        0.3 0.9814815
+## 5        0.4 0.9814815
+## 6        0.5 0.9719626
+## 7        0.6 0.9714286
+## 8        0.7 0.9807692
+## 9        0.8 0.9807692
+## 10       0.9 0.9807692
 ## 11       1.0 0.0000000
 ```
 
 ```
-## [1] "Classifier Probability Threshold: 0.3000 to maximize f.score.fit"
+## [1] "Classifier Probability Threshold: 0.4000 to maximize f.score.fit"
 ##   Republican.fctr Republican.fctr.predict.Final.glm.N
-## 1               N                                  44
+## 1               N                                  45
 ## 2               Y                                  NA
 ##   Republican.fctr.predict.Final.glm.Y
-## 1                                   3
+## 1                                   2
 ## 2                                  53
 ##          Prediction
 ## Reference  N  Y
-##         N 44  3
+##         N 45  2
 ##         Y  0 53
 ##       Accuracy          Kappa  AccuracyLower  AccuracyUpper   AccuracyNull 
-##   9.700000e-01   9.395649e-01   9.148239e-01   9.937700e-01   5.300000e-01 
+##   9.800000e-01   9.597586e-01   9.296161e-01   9.975687e-01   5.300000e-01 
 ## AccuracyPValue  McnemarPValue 
-##   3.124897e-23   2.482131e-01
+##   1.065928e-24   4.795001e-01
 ```
 
 ```
@@ -5687,16 +6233,18 @@ if (!is.null(glb_fin_mdl_id) && (glb_fin_mdl_id %in% names(glb_models_lst))) {
 ![](RCP_template2_files/figure-html/fit.data.training_0-6.png) 
 
 ```
-##    model_id model_method       feats max.nTuningRuns
-## 1 Final.glm          glm PropR, Year               1
-##   min.elapsedtime.everything min.elapsedtime.final max.auc.fit
-## 1                      1.189                 0.007   0.9955841
-##   opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
-## 1                    0.3       0.9724771        0.9601716
+##    model_id model_method
+## 1 Final.glm          glm
+##                                                                 feats
+## 1 PropR.fctr, Year, PropR.fctr:PropR.fctr, PropR.fctr:SurveyUSA.nonNA
+##   max.nTuningRuns min.elapsedtime.everything min.elapsedtime.final
+## 1               1                      0.962                 0.011
+##   max.auc.fit opt.prob.threshold.fit max.f.score.fit max.Accuracy.fit
+## 1   0.9985949                    0.4       0.9814815        0.9705882
 ##   max.AccuracyLower.fit max.AccuracyUpper.fit max.Kappa.fit min.aic.fit
-## 1             0.9148239               0.99377     0.9200429    21.76349
+## 1             0.9296161             0.9975687     0.9411751    17.24042
 ##   max.AccuracySD.fit max.KappaSD.fit
-## 1         0.01647589      0.03306002
+## 1         0.02941176      0.05862176
 ```
 
 ```r
@@ -5706,8 +6254,8 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "fit.data.training", major.inc=FALSE
 
 ```
 ##                label step_major step_minor     bgn     end elapsed
-## 14 fit.data.training          8          0  80.027 100.655  20.628
-## 15 fit.data.training          8          1 100.656      NA      NA
+## 14 fit.data.training          8          0 107.855 114.455     6.6
+## 15 fit.data.training          8          1 114.455      NA      NA
 ```
 
 
@@ -5720,7 +6268,7 @@ glb_trnobs_df <- glb_get_predictions(df=glb_trnobs_df, mdl_id=glb_fin_mdl_id,
 
 ```
 ## Warning in glb_get_predictions(df = glb_trnobs_df, mdl_id =
-## glb_fin_mdl_id, : Using default probability threshold: 0.7
+## glb_fin_mdl_id, : Using default probability threshold: 0.9
 ```
 
 ```r
@@ -5734,9 +6282,16 @@ print(glb_featsimp_df)
 ```
 
 ```
-##       Max.cor.Y.glm.importance importance Final.glm.importance
-## PropR                      100        100                  100
-## Year                         0          0                    0
+##                               Interact.High.cor.Y.glm.importance
+## `PropR.fctrY:SurveyUSA.nonNA`                        100.0000000
+## Year                                                  69.1263850
+## PropR.fctrY                                            0.1541784
+## `PropR.fctrN:SurveyUSA.nonNA`                          0.0000000
+##                                importance Final.glm.importance
+## `PropR.fctrY:SurveyUSA.nonNA` 100.0000000          100.0000000
+## Year                           69.1263850           69.1263850
+## PropR.fctrY                     0.1541784            0.1541784
+## `PropR.fctrN:SurveyUSA.nonNA`   0.0000000            0.0000000
 ```
 
 ```r
@@ -5747,74 +6302,46 @@ if (glb_is_classification && glb_is_binomial)
     glb_analytics_diag_plots(obs_df=glb_trnobs_df, mdl_id=glb_fin_mdl_id)                  
 ```
 
-![](RCP_template2_files/figure-html/fit.data.training_1-1.png) ![](RCP_template2_files/figure-html/fit.data.training_1-2.png) 
+![](RCP_template2_files/figure-html/fit.data.training_1-1.png) ![](RCP_template2_files/figure-html/fit.data.training_1-2.png) ![](RCP_template2_files/figure-html/fit.data.training_1-3.png) 
 
 ```
 ## [1] "Min/Max Boundaries: "
 ##     .rownames Republican.fctr Republican.fctr.predict.Final.glm.prob
-## 98         98               Y                            0.370022536
-## 22         22               Y                            0.401286793
-## 100       100               Y                            0.676401550
-## 1           1               Y                            0.994967749
-## 101       101               N                            0.006171152
-## 107       107               N                            0.001987141
-## 38         38               N                            0.708811164
-## 28         28               N                            0.920075131
+## 40         40               Y                           4.197182e-01
+## 71         71               Y                           5.681943e-01
+## 1           1               Y                           1.000000e+00
+## 101       101               N                           2.481225e-11
 ##     Republican.fctr.predict.Final.glm
-## 98                                  N
-## 22                                  N
-## 100                                 N
+## 40                                  N
+## 71                                  N
 ## 1                                   Y
 ## 101                                 N
-## 107                                 N
-## 38                                  Y
-## 28                                  Y
 ##     Republican.fctr.predict.Final.glm.accurate
-## 98                                       FALSE
-## 22                                       FALSE
-## 100                                      FALSE
+## 40                                       FALSE
+## 71                                       FALSE
 ## 1                                         TRUE
 ## 101                                       TRUE
-## 107                                       TRUE
-## 38                                       FALSE
-## 28                                       FALSE
 ##     Republican.fctr.predict.Final.glm.error .label
-## 98                             -0.329977464     98
-## 22                             -0.298713207     22
-## 100                            -0.023598450    100
-## 1                               0.000000000      1
-## 101                             0.000000000    101
-## 107                             0.000000000    107
-## 38                              0.008811164     38
-## 28                              0.220075131     28
+## 40                               -0.4802818     40
+## 71                               -0.3318057     71
+## 1                                 0.0000000      1
+## 101                               0.0000000    101
 ## [1] "Inaccurate: "
-##     .rownames Republican.fctr Republican.fctr.predict.Final.glm.prob
-## 98         98               Y                              0.3700225
-## 22         22               Y                              0.4012868
-## 100       100               Y                              0.6764016
-## 38         38               N                              0.7088112
-## 28         28               N                              0.9200751
-##     Republican.fctr.predict.Final.glm
-## 98                                  N
-## 22                                  N
-## 100                                 N
-## 38                                  Y
-## 28                                  Y
-##     Republican.fctr.predict.Final.glm.accurate
-## 98                                       FALSE
-## 22                                       FALSE
-## 100                                      FALSE
-## 38                                       FALSE
-## 28                                       FALSE
-##     Republican.fctr.predict.Final.glm.error
-## 98                             -0.329977464
-## 22                             -0.298713207
-## 100                            -0.023598450
-## 38                              0.008811164
-## 28                              0.220075131
+##    .rownames Republican.fctr Republican.fctr.predict.Final.glm.prob
+## 40        40               Y                              0.4197182
+## 71        71               Y                              0.5681943
+##    Republican.fctr.predict.Final.glm
+## 40                                 N
+## 71                                 N
+##    Republican.fctr.predict.Final.glm.accurate
+## 40                                      FALSE
+## 71                                      FALSE
+##    Republican.fctr.predict.Final.glm.error
+## 40                              -0.4802818
+## 71                              -0.3318057
 ```
 
-![](RCP_template2_files/figure-html/fit.data.training_1-3.png) 
+![](RCP_template2_files/figure-html/fit.data.training_1-4.png) 
 
 ```r
 dsp_feats_vctr <- c(NULL)
@@ -5893,16 +6420,16 @@ replay.petrisim(pn=glb_analytics_pn,
 ## 5.0000 	 4 	 0 0 2 1
 ```
 
-![](RCP_template2_files/figure-html/fit.data.training_1-4.png) 
+![](RCP_template2_files/figure-html/fit.data.training_1-5.png) 
 
 ```r
 glb_chunks_df <- myadd_chunk(glb_chunks_df, "predict.data.new", major.inc=TRUE)
 ```
 
 ```
-##                label step_major step_minor     bgn    end elapsed
-## 15 fit.data.training          8          1 100.656 103.79   3.134
-## 16  predict.data.new          9          0 103.791     NA      NA
+##                label step_major step_minor     bgn     end elapsed
+## 15 fit.data.training          8          1 114.455 117.991   3.536
+## 16  predict.data.new          9          0 117.991      NA      NA
 ```
 
 ## Step `9.0: predict data new`
@@ -5919,7 +6446,7 @@ glb_newobs_df <- glb_get_predictions(glb_newobs_df, mdl_id=glb_fin_mdl_id,
 
 ```
 ## Warning in glb_get_predictions(glb_newobs_df, mdl_id = glb_fin_mdl_id,
-## rsp_var_out = glb_rsp_var_out, : Using default probability threshold: 0.7
+## rsp_var_out = glb_rsp_var_out, : Using default probability threshold: 0.9
 ```
 
 ```r
@@ -5930,38 +6457,29 @@ if (glb_is_classification && glb_is_binomial)
     glb_analytics_diag_plots(obs_df=glb_newobs_df, mdl_id=glb_fin_mdl_id)                  
 ```
 
-![](RCP_template2_files/figure-html/predict.data.new-1.png) ![](RCP_template2_files/figure-html/predict.data.new-2.png) 
+![](RCP_template2_files/figure-html/predict.data.new-1.png) ![](RCP_template2_files/figure-html/predict.data.new-2.png) ![](RCP_template2_files/figure-html/predict.data.new-3.png) 
 
 ```
 ## [1] "Min/Max Boundaries: "
-##     .rownames Republican.fctr Republican.fctr.predict.Final.glm.prob
-## 10         10               Y                            0.993457132
-## 102       102               N                            0.001741817
-## 24         24               N                            0.774083765
-##     Republican.fctr.predict.Final.glm
-## 10                                  Y
-## 102                                 N
-## 24                                  Y
-##     Republican.fctr.predict.Final.glm.accurate
-## 10                                        TRUE
-## 102                                       TRUE
-## 24                                       FALSE
-##     Republican.fctr.predict.Final.glm.error .label
-## 10                               0.00000000     10
-## 102                              0.00000000    102
-## 24                               0.07408377     24
-## [1] "Inaccurate: "
 ##    .rownames Republican.fctr Republican.fctr.predict.Final.glm.prob
-## 24        24               N                              0.7740838
+## 10        10               Y                                      1
 ##    Republican.fctr.predict.Final.glm
-## 24                                 Y
+## 10                                 Y
 ##    Republican.fctr.predict.Final.glm.accurate
-## 24                                      FALSE
-##    Republican.fctr.predict.Final.glm.error
-## 24                              0.07408377
+## 10                                       TRUE
+##    Republican.fctr.predict.Final.glm.error .label
+## 10                                       0     10
+## [1] "Inaccurate: "
+## [1] .rownames                                 
+## [2] Republican.fctr                           
+## [3] Republican.fctr.predict.Final.glm.prob    
+## [4] Republican.fctr.predict.Final.glm         
+## [5] Republican.fctr.predict.Final.glm.accurate
+## [6] Republican.fctr.predict.Final.glm.error   
+## <0 rows> (or 0-length row.names)
 ```
 
-![](RCP_template2_files/figure-html/predict.data.new-3.png) 
+![](RCP_template2_files/figure-html/predict.data.new-4.png) 
 
 ```r
 if (glb_is_classification && glb_is_binomial) {
@@ -5989,7 +6507,7 @@ if (glb_is_classification && glb_is_binomial)
 ```
 
 ```
-## [1] 0.7
+## [1] 0.9
 ```
 
 ```r
@@ -5997,7 +6515,7 @@ print(sprintf("glb_sel_mdl_id: %s", glb_sel_mdl_id))
 ```
 
 ```
-## [1] "glb_sel_mdl_id: Max.cor.Y.glm"
+## [1] "glb_sel_mdl_id: Interact.High.cor.Y.glm"
 ```
 
 ```r
@@ -6013,7 +6531,7 @@ print(dim(glb_fitobs_df))
 ```
 
 ```
-## [1] 100  11
+## [1] 100  16
 ```
 
 ```r
@@ -6022,31 +6540,33 @@ print(dsp_models_df)
 
 ```
 ##                     model_id max.Accuracy.OOB max.auc.OOB max.Kappa.OOB
-## 6              Max.cor.Y.glm        0.9777778   0.9990079     0.9554896
-## 7    Interact.High.cor.Y.glm        0.9777778   0.9990079     0.9554896
-## 12         All.X.no.rnorm.rf        0.9777778   0.9980159     0.9554896
-## 8              Low.cor.X.glm        0.9777778   0.9980159     0.9554896
-## 9                  All.X.glm        0.9777778   0.9980159     0.9554896
-## 10            All.X.bayesglm        0.9777778   0.9980159     0.9554896
-## 4  Max.cor.Y.cv.0.cp.0.rpart        0.9777778   0.9791667     0.9554896
-## 5            Max.cor.Y.rpart        0.9777778   0.9791667     0.9554896
-## 11      All.X.no.rnorm.rpart        0.9777778   0.9791667     0.9554896
-## 1          MFO.myMFO_classfr        0.5333333   0.5000000     0.0000000
-## 2    Random.myrandom_classfr        0.4666667   0.5595238     0.0000000
-## 3       Max.cor.Y.cv.0.rpart        0.4666667   0.5000000     0.0000000
+## 8    Interact.High.cor.Y.glm        1.0000000   1.0000000     1.0000000
+## 11            All.X.bayesglm        1.0000000   1.0000000     1.0000000
+## 13         All.X.no.rnorm.rf        1.0000000   1.0000000     1.0000000
+## 7              Max.cor.Y.glm        0.9777778   0.9791667     0.9554896
+## 1  Baseline.mybaseln_classfr        0.9777778   0.9791667     0.9554896
+## 5  Max.cor.Y.cv.0.cp.0.rpart        0.9777778   0.9791667     0.9554896
+## 6            Max.cor.Y.rpart        0.9777778   0.9791667     0.9554896
+## 12      All.X.no.rnorm.rpart        0.9777778   0.9791667     0.9554896
+## 9              Low.cor.X.glm        0.9777778   0.9742063     0.9554896
+## 10                 All.X.glm        0.8444444   0.9047619     0.6808511
+## 2          MFO.myMFO_classfr        0.5333333   0.5000000     0.0000000
+## 3    Random.myrandom_classfr        0.4666667   0.5595238     0.0000000
+## 4       Max.cor.Y.cv.0.rpart        0.4666667   0.5000000     0.0000000
 ##    min.aic.fit opt.prob.threshold.OOB
-## 6     21.76349                    0.7
-## 7     21.76349                    0.7
-## 12          NA                    0.7
-## 8     23.32288                    0.7
-## 9     24.85136                    0.8
-## 10    25.38721                    0.7
-## 4           NA                    0.9
+## 8     17.24042                    0.9
+## 11    25.03455                    0.7
+## 13          NA                    0.9
+## 7     23.12676                    0.9
+## 1           NA                    1.0
 ## 5           NA                    0.9
-## 11          NA                    0.9
-## 1           NA                    0.5
-## 2           NA                    0.4
-## 3           NA                    0.5
+## 6           NA                    0.9
+## 12          NA                    0.9
+## 9     24.99235                    0.8
+## 10    18.00000                    0.3
+## 2           NA                    0.5
+## 3           NA                    0.4
+## 4           NA                    0.5
 ```
 
 ```r
@@ -6114,15 +6634,15 @@ if (glb_is_classification) {
 ```
 
 ```
-## [1] "Max.cor.Y.glm OOB confusion matrix & accuracy: "
+## [1] "Interact.High.cor.Y.glm OOB confusion matrix & accuracy: "
 ##          Prediction
 ## Reference  N  Y
-##         N 23  1
+##         N 24  0
 ##         Y  0 21
 ## [1] "Final.glm new confusion matrix & accuracy: "
 ##          Prediction
 ## Reference  N  Y
-##         N 23  1
+##         N 24  0
 ##         Y  0 21
 ```
 
@@ -6221,9 +6741,16 @@ print(orderBy(as.formula(paste0("~ -", glb_sel_mdl_id, ".importance")), glb_feat
 ```
 
 ```
-##       Max.cor.Y.glm.importance importance Final.glm.importance
-## PropR                      100        100                  100
-## Year                         0          0                    0
+##                               Interact.High.cor.Y.glm.importance
+## `PropR.fctrY:SurveyUSA.nonNA`                        100.0000000
+## Year                                                  69.1263850
+## PropR.fctrY                                            0.1541784
+## `PropR.fctrN:SurveyUSA.nonNA`                          0.0000000
+##                                importance Final.glm.importance
+## `PropR.fctrY:SurveyUSA.nonNA` 100.0000000          100.0000000
+## Year                           69.1263850           69.1263850
+## PropR.fctrY                     0.1541784            0.1541784
+## `PropR.fctrN:SurveyUSA.nonNA`   0.0000000            0.0000000
 ```
 
 ```r
@@ -6277,9 +6804,9 @@ glb_chunks_df <- myadd_chunk(glb_chunks_df, "display.session.info", major.inc=TR
 ```
 
 ```
-##                   label step_major step_minor     bgn    end elapsed
-## 16     predict.data.new          9          0 103.791 105.88   2.089
-## 17 display.session.info         10          0 105.880     NA      NA
+##                   label step_major step_minor     bgn     end elapsed
+## 16     predict.data.new          9          0 117.991 120.507   2.516
+## 17 display.session.info         10          0 120.507      NA      NA
 ```
 
 Null Hypothesis ($\sf{H_{0}}$): mpg is not impacted by am_fctr.  
@@ -6294,40 +6821,40 @@ We reject the null hypothesis i.e. we have evidence to conclude that am_fctr imp
 
 ```
 ##                      label step_major step_minor     bgn     end elapsed
-## 10              fit.models          7          0  20.743  43.499  22.756
-## 14       fit.data.training          8          0  80.027 100.655  20.628
-## 11              fit.models          7          1  43.499  63.382  19.883
-## 12              fit.models          7          2  63.383  76.030  12.647
-## 2             inspect.data          2          0  11.435  16.932   5.498
-## 13              fit.models          7          3  76.031  80.026   3.995
-## 15       fit.data.training          8          1 100.656 103.790   3.134
-## 16        predict.data.new          9          0 103.791 105.880   2.089
-## 5         extract.features          3          0  18.135  19.458   1.323
-## 3               scrub.data          2          1  16.933  18.072   1.139
-## 8          select.features          5          0  19.814  20.413   0.600
-## 1              import.data          1          0  11.098  11.434   0.337
-## 9  partition.data.training          6          0  20.414  20.742   0.329
-## 6             cluster.data          4          0  19.458  19.755   0.297
-## 4           transform.data          2          2  18.072  18.134   0.062
-## 7      manage.missing.data          4          1  19.756  19.813   0.058
+## 10              fit.models          7          0  46.996  71.732  24.736
+## 11              fit.models          7          1  71.733  91.342  19.609
+## 12              fit.models          7          2  91.342 104.200  12.858
+## 2             inspect.data          2          0  19.680  30.188  10.508
+## 14       fit.data.training          8          0 107.855 114.455   6.600
+## 7      manage.missing.data          4          1  40.351  45.766   5.415
+## 5         extract.features          3          0  32.172  36.600   4.429
+## 6             cluster.data          4          0  36.601  40.350   3.749
+## 13              fit.models          7          3 104.200 107.855   3.655
+## 15       fit.data.training          8          1 114.455 117.991   3.536
+## 16        predict.data.new          9          0 117.991 120.507   2.516
+## 3               scrub.data          2          1  30.189  32.104   1.915
+## 8          select.features          5          0  45.766  46.439   0.673
+## 9  partition.data.training          6          0  46.439  46.996   0.557
+## 1              import.data          1          0  19.242  19.680   0.438
+## 4           transform.data          2          2  32.105  32.172   0.067
 ##    duration
-## 10   22.756
-## 14   20.628
-## 11   19.883
-## 12   12.647
-## 2     5.497
-## 13    3.995
-## 15    3.134
-## 16    2.089
-## 5     1.323
-## 3     1.139
-## 8     0.599
-## 1     0.336
-## 9     0.328
-## 6     0.297
-## 4     0.062
-## 7     0.057
-## [1] "Total Elapsed Time: 105.88 secs"
+## 10   24.736
+## 11   19.609
+## 12   12.858
+## 2    10.508
+## 14    6.600
+## 7     5.415
+## 5     4.428
+## 6     3.749
+## 13    3.655
+## 15    3.536
+## 16    2.516
+## 3     1.915
+## 8     0.673
+## 9     0.557
+## 1     0.438
+## 4     0.067
+## [1] "Total Elapsed Time: 120.507 secs"
 ```
 
 ![](RCP_template2_files/figure-html/display.session.info-1.png) 
@@ -6348,27 +6875,28 @@ We reject the null hypothesis i.e. we have evidence to conclude that am_fctr imp
 ##  [1] gdata_2.16.1        randomForest_4.6-10 arm_1.8-5          
 ##  [4] lme4_1.1-8          Matrix_1.2-1        MASS_7.3-41        
 ##  [7] rpart.plot_1.5.2    rpart_4.1-9         ROCR_1.0-7         
-## [10] gplots_2.17.0       dplyr_0.4.2         plyr_1.8.3         
-## [13] sqldf_0.4-10        RSQLite_1.0.0       DBI_0.3.1          
-## [16] gsubfn_0.6-6        proto_0.3-10        reshape2_1.4.1     
-## [19] doMC_1.3.3          iterators_1.0.7     foreach_1.4.2      
-## [22] doBy_4.5-13         survival_2.38-2     caret_6.0-47       
-## [25] ggplot2_1.0.1       lattice_0.20-31    
+## [10] gplots_2.17.0       mice_2.22           Rcpp_0.11.6        
+## [13] dplyr_0.4.2         plyr_1.8.3          sqldf_0.4-10       
+## [16] RSQLite_1.0.0       DBI_0.3.1           gsubfn_0.6-6       
+## [19] proto_0.3-10        reshape2_1.4.1      doMC_1.3.3         
+## [22] iterators_1.0.7     foreach_1.4.2       doBy_4.5-13        
+## [25] survival_2.38-2     caret_6.0-47        ggplot2_1.0.1      
+## [28] lattice_0.20-31    
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.11.6         class_7.3-12        gtools_3.5.0       
-##  [4] assertthat_0.1      digest_0.6.8        R6_2.0.1           
-##  [7] BradleyTerry2_1.0-6 chron_2.3-47        coda_0.17-1        
-## [10] evaluate_0.7        e1071_1.6-4         lazyeval_0.1.10    
-## [13] minqa_1.2.4         SparseM_1.6         car_2.0-25         
-## [16] nloptr_1.0.4        rmarkdown_0.7       labeling_0.3       
-## [19] splines_3.2.0       stringr_1.0.0       munsell_0.4.2      
-## [22] compiler_3.2.0      mgcv_1.8-6          htmltools_0.2.6    
-## [25] nnet_7.3-9          codetools_0.2-11    brglm_0.5-9        
-## [28] bitops_1.0-6        nlme_3.1-120        gtable_0.1.2       
-## [31] magrittr_1.5        formatR_1.2         scales_0.2.5       
-## [34] KernSmooth_2.23-14  stringi_0.5-2       RColorBrewer_1.1-2 
-## [37] tools_3.2.0         abind_1.4-3         pbkrtest_0.4-2     
-## [40] yaml_2.1.13         colorspace_1.2-6    caTools_1.17.1     
-## [43] knitr_1.10.5        quantreg_5.11
+##  [1] class_7.3-12        gtools_3.5.0        assertthat_0.1     
+##  [4] digest_0.6.8        R6_2.0.1            BradleyTerry2_1.0-6
+##  [7] chron_2.3-47        coda_0.17-1         evaluate_0.7       
+## [10] e1071_1.6-4         lazyeval_0.1.10     minqa_1.2.4        
+## [13] SparseM_1.6         car_2.0-25          nloptr_1.0.4       
+## [16] rmarkdown_0.7       labeling_0.3        splines_3.2.0      
+## [19] stringr_1.0.0       munsell_0.4.2       compiler_3.2.0     
+## [22] mgcv_1.8-6          htmltools_0.2.6     nnet_7.3-9         
+## [25] codetools_0.2-11    brglm_0.5-9         bitops_1.0-6       
+## [28] nlme_3.1-120        gtable_0.1.2        magrittr_1.5       
+## [31] formatR_1.2         scales_0.2.5        KernSmooth_2.23-14 
+## [34] stringi_0.5-2       RColorBrewer_1.1-2  tools_3.2.0        
+## [37] abind_1.4-3         pbkrtest_0.4-2      yaml_2.1.13        
+## [40] colorspace_1.2-6    caTools_1.17.1      knitr_1.10.5       
+## [43] quantreg_5.11
 ```

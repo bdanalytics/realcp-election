@@ -39,7 +39,8 @@ sign(20)
 sign(-10)
 sign(0)
 table(sign(Train$Rasmussen))
-table(Train$Republican, sign(Train$Rasmussen))
+# table(Train$Republican, sign(Train$Rasmussen))
+table(glb_trnobs_df$Republican, sign(glb_trnobs_df$Rasmussen))
 
 
 
